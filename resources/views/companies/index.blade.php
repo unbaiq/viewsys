@@ -4,199 +4,177 @@
 
 @section('content')
 
-<div class="bg-white shadow-sm rounded-2xl border border-gray-100">
+<div class="max-w-8xl mx-auto space-y-4">
 
-{{-- FILTER BAR --}}
-<div class="p-6 border-b bg-gray-50 rounded-t-2xl">
+    @if(session('success'))
+        <div id="flash-alert" class="flex items-center p-4 mb-4 text-sm text-green-800 rounded-xl bg-green-50 border border-green-200 transition-opacity duration-500" role="alert">
+            <i class="fa fa-check-circle mr-2"></i>
+            <div>
+                <span class="font-semibold">Success!</span> {{ session('success') }}
+            </div>
+        </div>
+    @endif
 
-<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    @if(session('error'))
+        <div id="flash-alert" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-xl bg-red-50 border border-red-200 transition-opacity duration-500" role="alert">
+            <i class="fa fa-exclamation-circle mr-2"></i>
+            <div>
+                <span class="font-semibold">Alert!</span> {{ session('error') }}
+            </div>
+        </div>
+    @endif
 
-<form class="flex flex-wrap items-center gap-3">
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm">
 
-<input
-name="search"
-value="{{ request('search') }}"
-placeholder="Search company..."
-class="border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none rounded-lg px-4 py-2 text-sm w-56">
+        <div class="px-5 py-4 border-b bg-slate-50 flex justify-between">
 
-<select name="plan"
-class="border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-3 py-2 text-sm">
+            <form class="flex gap-2">
+                <input name="search" value="{{ request('search') }}"
+                    placeholder="Search..."
+                    class="border rounded-lg px-3 py-2 text-xs">
 
-<option value="">All Plans</option>
-<option value="starter" {{ request('plan')=='starter' ? 'selected' : '' }}>Starter</option>
-<option value="business" {{ request('plan')=='business' ? 'selected' : '' }}>Business</option>
-<option value="enterprise" {{ request('plan')=='enterprise' ? 'selected' : '' }}>Enterprise</option>
+                <button class="bg-slate-900 text-white px-3 py-2 text-xs rounded-lg">
+                    Apply
+                </button>
+            </form>
 
-</select>
+            <a href="{{ route('companies.create') }}"
+               class="bg-indigo-600 text-white text-xs px-4 py-2 rounded-lg">
+                + Company
+            </a>
 
-<select name="status"
-class="border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-3 py-2 text-sm">
+        </div>
 
-<option value="">All Status</option>
-<option value="1" {{ request('status')=='1' ? 'selected' : '' }}>Active</option>
-<option value="0" {{ request('status')=='0' ? 'selected' : '' }}>Inactive</option>
+        <div class="overflow-x-auto">
 
-</select>
+            <table class="w-full text-xs">
 
-<button
-class="bg-gray-900 hover:bg-black text-white text-sm px-4 py-2 rounded-lg transition">
-Filter
-</button>
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-5 py-3 text-left">Company</th>
+                        <th>Plan</th>
+                        <th>Screens</th>
+                        <th>Storage</th>
+                        <th>Start</th>
+                        <th>Expiry</th>
+                        <th>Status</th>
+                        <th class="text-right pr-5">Actions</th>
+                    </tr>
+                </thead>
 
-@if(request()->hasAny(['search','plan','status']))
-<a href="{{ route('companies.index') }}"
-class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm px-4 py-2 rounded-lg transition">
-Reset
-</a>
-@endif
+                <tbody class="divide-y">
 
-</form>
+                @forelse($companies as $company)
 
-<a href="{{ route('companies.create') }}"
-class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-5 py-2 rounded-lg shadow-sm transition">
-+ Add Company
-</a>
+                    <tr class="hover:bg-slate-50">
 
-</div>
+                        <td class="px-5 py-3">
+                            <div class="font-medium">{{ $company->name }}</div>
+                            <div class="text-[11px] text-slate-500">{{ $company->email }}</div>
+                        </td>
 
-</div>
+                        <td>{{ ucfirst($company->plan) }}</td>
 
+                        <td>{{ $company->screen_limit }}</td>
 
-{{-- TABLE --}}
-<div class="overflow-x-auto">
+                        <td>{{ $company->storage_limit }} MB</td>
 
-<table class="w-full text-sm">
+                        <td>
+                            {{ $company->plan_start_date ? $company->plan_start_date->format('d M Y') : '-' }}
+                        </td>
 
-<thead class="bg-gray-50 text-gray-600">
+                        <td>
+                            @if($company->plan_end_date)
+                                {{ $company->plan_end_date->format('d M Y') }}
 
-<tr>
-<th class="px-6 py-4 text-left font-semibold">Company</th>
-<th class="px-6 py-4 text-left font-semibold">Plan</th>
-<th class="px-6 py-4 text-left font-semibold">Screens</th>
-<th class="px-6 py-4 text-left font-semibold">Storage</th>
-<th class="px-6 py-4 text-left font-semibold">Status</th>
-<th class="px-6 py-4 text-right font-semibold">Actions</th>
-</tr>
+                                @if($company->isExpired())
+                                    <div class="text-red-500 text-[10px]">Expired</div>
+                                @else
+                                    <div class="text-green-600 text-[10px]">
+                                        {{ $company->remainingDays() }} days left
+                                    </div>
+                                @endif
+                            @else
+                                -
+                            @endif
+                        </td>
 
-</thead>
+                        <td>
+                            @if($company->is_active)
+                                <span class="text-green-600">Active</span>
+                            @else
+                                <span class="text-red-500">Disabled</span>
+                            @endif
+                        </td>
 
-<tbody class="divide-y divide-gray-100">
+                        <td class="text-right pr-5">
+                            <div class="flex justify-end gap-2">
 
-@forelse($companies as $company)
+                                <a href="{{ route('companies.edit',$company) }}"
+                                   class="text-indigo-600">
+                                    <i class="fa fa-pen"></i>
+                                </a>
 
-<tr class="hover:bg-gray-50 transition">
+                                <form method="POST"
+                                      action="{{ route('companies.toggle',$company) }}">
+                                    @csrf
+                                    @method('PATCH')
 
-<td class="px-6 py-4">
+                                    <button class="{{ $company->is_active ? 'text-yellow-600' : 'text-green-600' }}">
+                                        <i class="fa {{ $company->is_active ? 'fa-ban' : 'fa-check' }}"></i>
+                                    </button>
+                                </form>
 
-<div class="font-semibold text-gray-800">
-{{ $company->name }}
-</div>
+                                <form method="POST"
+                                      action="{{ route('companies.destroy',$company) }}"
+                                      onsubmit="return confirm('Delete company?')">
+                                    @csrf
+                                    @method('DELETE')
 
-<div class="text-xs text-gray-500">
-{{ $company->email }}
-</div>
+                                    <button class="text-red-600">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </form>
 
-</td>
+                            </div>
+                        </td>
 
+                    </tr>
 
-<td class="px-6 py-4">
+                @empty
 
-<span class="px-3 py-1 text-xs font-medium rounded-full
-@if($company->plan == 'starter') bg-blue-100 text-blue-700
-@elseif($company->plan == 'business') bg-purple-100 text-purple-700
-@else bg-gray-100 text-gray-700
-@endif
-">
+                    <tr>
+                        <td colspan="8" class="text-center py-10 text-slate-400">
+                            No companies found
+                        </td>
+                    </tr>
 
-{{ ucfirst($company->plan) }}
+                @endforelse
 
-</span>
+                </tbody>
 
-</td>
+            </table>
 
+        </div>
 
-<td class="px-6 py-4 text-gray-700">
-{{ $company->screen_limit }}
-</td>
+        <div class="p-4">
+            {{ $companies->links() }}
+        </div>
 
-
-<td class="px-6 py-4 text-gray-700">
-{{ $company->storage_limit }} MB
-</td>
-
-
-<td class="px-6 py-4">
-
-@if($company->is_active)
-
-<span class="px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">
-Active
-</span>
-
-@else
-
-<span class="px-3 py-1 text-xs font-medium bg-red-100 text-red-600 rounded-full">
-Disabled
-</span>
-
-@endif
-
-</td>
-
-
-<td class="px-6 py-4 text-right">
-
-<div class="flex justify-end gap-4 text-sm">
-
-<a href="{{ route('companies.edit',$company) }}"
-class="text-indigo-600 hover:text-indigo-800 font-medium">
-Edit
-</a>
-
-<form method="POST"
-action="{{ route('companies.destroy',$company) }}"
-onsubmit="return confirm('Delete company?')">
-
-@csrf
-@method('DELETE')
-
-<button class="text-red-600 hover:text-red-800 font-medium">
-Delete
-</button>
-
-</form>
+    </div>
 
 </div>
 
-</td>
-
-</tr>
-
-@empty
-
-<tr>
-<td colspan="6" class="text-center py-10 text-gray-500">
-No companies found.
-</td>
-</tr>
-
-@endforelse
-
-</tbody>
-
-</table>
-
-</div>
-
-
-{{-- PAGINATION --}}
-@if($companies->hasPages())
-<div class="p-6 border-t bg-gray-50 rounded-b-2xl">
-{{ $companies->links() }}
-</div>
-@endif
-
-
-</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const alert = document.getElementById('flash-alert');
+        if (alert) {
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 4000);
+        }
+    });
+</script>
 
 @endsection

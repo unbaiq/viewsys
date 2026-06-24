@@ -25,7 +25,7 @@ class Cluster extends Model
     ];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
     /*
@@ -46,8 +46,20 @@ class Cluster extends Model
 
     public function screens()
     {
-        return $this->belongsToMany(Screen::class, 'cluster_screen')
-            ->withTimestamps();
+        return $this->belongsToMany(
+            Screen::class,
+            'cluster_screen'
+        )->withTimestamps();
+    }
+
+    /**
+     * Layout Zones
+     * Example:
+     * left, right, sidebar, top_left, bottom_right etc
+     */
+    public function layouts()
+    {
+        return $this->hasMany(ClusterLayout::class);
     }
 
     /*
@@ -63,9 +75,7 @@ class Cluster extends Model
 
     public function scopeCompany(Builder $query, $companyId = null)
     {
-        if (!$companyId) {
-            $companyId = Auth::user()?->company_id;
-        }
+        $companyId = $companyId ?: Auth::user()?->company_id;
 
         if (!$companyId) {
             return $query;
@@ -76,9 +86,24 @@ class Cluster extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Helpers
+    | Layout Helpers
     |--------------------------------------------------------------------------
     */
+
+    public function isFullscreenLayout()
+    {
+        return $this->type === 'fullscreen';
+    }
+
+    public function isHalfLayout()
+    {
+        return $this->type === 'half';
+    }
+
+    public function isSidebarLayout()
+    {
+        return $this->type === 'sidebar';
+    }
 
     public function isHeaderLayout()
     {
@@ -95,5 +120,93 @@ class Cluster extends Model
         return $this->type === 'grid';
     }
 
+    public function isTripleLayout()
+    {
+        return $this->type === 'triple';
+    }
 
+    public function isMenuLayout()
+    {
+        return $this->type === 'menu';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Zone Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function getZonesAttribute()
+    {
+        return match ($this->type) {
+
+            'fullscreen' => [
+                'main'
+            ],
+
+            'half' => [
+                'left',
+                'right'
+            ],
+
+            'sidebar' => [
+                'main',
+                'sidebar'
+            ],
+
+            'header' => [
+                'header',
+                'main'
+            ],
+
+            'ticker' => [
+                'main',
+                'ticker'
+            ],
+
+            'grid' => [
+                'top_left',
+                'top_right',
+                'bottom_left',
+                'bottom_right'
+            ],
+
+            'triple' => [
+                'left',
+                'center',
+                'right'
+            ],
+
+            'menu' => [
+                'header',
+                'left',
+                'center',
+                'right'
+            ],
+
+            default => [
+                'main'
+            ]
+        };
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Status Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function activate()
+    {
+        return $this->update([
+            'is_active' => true
+        ]);
+    }
+
+    public function deactivate()
+    {
+        return $this->update([
+            'is_active' => false
+        ]);
+    }
 }

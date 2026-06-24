@@ -4,183 +4,161 @@
 
 @section('content')
 
-<div class="max-w-3xl mx-auto">
+<div class="max-w-5xl mx-auto">
 
-<div class="bg-white shadow rounded-xl">
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm">
 
-<!-- Header -->
-<div class="p-6 border-b">
-<h2 class="text-lg font-semibold text-gray-800">
-New User
-</h2>
-<p class="text-sm text-gray-500">
-Create a new platform user and assign their role.
-</p>
-</div>
+        <!-- HEADER -->
+        <div class="px-6 py-4 border-b">
+            <h2 class="text-base font-semibold text-slate-800">Create User</h2>
+            <p class="text-xs text-slate-500">Add a new user</p>
+        </div>
 
-<!-- Form -->
-<form method="POST" action="{{ route('users.store') }}" class="p-6 space-y-6">
-@csrf
+        <!-- FORM -->
+        <form method="POST" action="{{ route('users.store') }}" class="p-6">
+        @csrf
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-<!-- Name -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Full Name
-</label>
+            <!-- NAME -->
+            <div>
+                <label class="text-xs font-medium text-slate-600">Full Name</label>
+                <input type="text" name="name" value="{{ old('name') }}"
+                    class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('name') border-red-500 @enderror">
+                @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
 
-<input
-type="text"
-name="name"
-value="{{ old('name') }}"
-class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+            <!-- EMAIL -->
+            <div>
+                <label class="text-xs font-medium text-slate-600">Email</label>
+                <input type="email" name="email" value="{{ old('email') }}"
+                    class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('email') border-red-500 @enderror">
+                @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
 
-@error('name')
-<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-@enderror
-</div>
+            <!-- PASSWORD -->
+            <div>
+                <label class="text-xs font-medium text-slate-600">Password</label>
+                <input type="password" name="password"
+                    class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('password') border-red-500 @enderror">
+                @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
 
+            <!-- ROLE -->
+            <div>
+                <label class="text-xs font-medium text-slate-600">Role</label>
 
-<!-- Email -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Email Address
-</label>
+                @if(auth()->user()->isSuperAdmin())
+                    <select name="role" id="roleSelect"
+                        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+                        <option value="admin" {{ old('role')=='admin'?'selected':'' }}>Admin</option>
+                        <option value="manager" {{ old('role')=='manager'?'selected':'' }}>Manager</option>
+                    </select>
 
-<input
-type="email"
-name="email"
-value="{{ old('email') }}"
-class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                @elseif(auth()->user()->isAdmin())
+                    <select name="role" id="roleSelect"
+                        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-gray-100 cursor-not-allowed">
+                        <option value="manager" selected>Manager</option>
+                    </select>
+                @endif
+            </div>
 
-@error('email')
-<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-@enderror
-</div>
+            <!-- COMPANY -->
+            @if(auth()->user()->isSuperAdmin())
+            <div>
+                <label class="text-xs font-medium text-slate-600">Company</label>
+                <select name="company_id"
+                    class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 
+                    <option value="">Select Company</option>
 
-<!-- Password -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Password
-</label>
+                    @foreach($companies as $id => $name)
+                        <option value="{{ $id }}" {{ old('company_id')==$id?'selected':'' }}>
+                            {{ $name }}
+                        </option>
+                    @endforeach
 
-<input
-type="password"
-name="password"
-class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                </select>
+            </div>
+            @else
+                <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+            @endif
 
-<p class="text-xs text-gray-500 mt-1">
-Minimum 6 characters recommended.
-</p>
+            <!-- SCREEN (ONLY FOR MANAGER) -->
+            <div id="screenField" class="hidden md:col-span-2">
+                <label class="text-xs font-medium text-slate-600">Assign Screen</label>
+                <select name="screen_id"
+                    class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 
-@error('password')
-<p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-@enderror
-</div>
+                    <option value="">None</option>
 
+                    @foreach($screens ?? [] as $id => $name)
+                        <option value="{{ $id }}" {{ old('screen_id')==$id?'selected':'' }}>
+                            {{ $name }}
+                        </option>
+                    @endforeach
 
-<!-- Role -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Role
-</label>
+                </select>
+            </div>
 
-<select name="role"
-class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
 
-<option value="manager">Manager</option>
-<option value="admin">Admin</option>
-<option value="superadmin">Super Admin</option>
+        <!-- FOOTER -->
+        <div class="mt-6 flex items-center justify-between border-t pt-4">
 
-</select>
-</div>
+            <!-- STATUS -->
+            <label class="flex items-center gap-2 text-xs text-slate-600">
+                <input type="hidden" name="is_active" value="0">
+                <input type="checkbox" name="is_active" value="1"
+                    {{ old('is_active',1) ? 'checked' : '' }}
+                    class="rounded border-slate-300">
+                Active User
+            </label>
 
+            <!-- BUTTONS -->
+            <div class="flex gap-3">
+                <a href="{{ route('users.index') }}"
+                   class="px-4 py-2 text-xs border rounded-lg text-slate-600 hover:bg-slate-50">
+                    Cancel
+                </a>
 
-<!-- Company -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Company
-</label>
+                <button
+                    class="px-5 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    Create User
+                </button>
+            </div>
 
-<select name="company_id"
-class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+        </div>
 
-<option value="">None</option>
+        </form>
 
-@foreach($companies as $id => $name)
-<option value="{{ $id }}">
-{{ $name }}
-</option>
-@endforeach
-
-</select>
-</div>
-
-
-<!-- Screen -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Assigned Screen
-</label>
-
-<select name="screen_id"
-class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-
-<option value="">None</option>
-
-@foreach($screens as $id => $name)
-<option value="{{ $id }}">
-{{ $name }}
-</option>
-@endforeach
-
-</select>
-
-<p class="text-xs text-gray-500 mt-1">
-Managers can be limited to a single screen.
-</p>
+    </div>
 
 </div>
 
+{{-- ================= SCRIPT ================= --}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-<!-- Status -->
-<div>
-<label class="flex items-center gap-2 text-sm text-gray-700">
+    const roleSelect = document.getElementById('roleSelect');
+    const screenField = document.getElementById('screenField');
 
-<input
-type="checkbox"
-name="is_active"
-value="1"
-checked
-class="rounded border-gray-300">
+    function toggleScreenField() {
+        if (roleSelect && roleSelect.value === 'manager') {
+            screenField.classList.remove('hidden');
+        } else {
+            screenField.classList.add('hidden');
+        }
+    }
 
-Active account
+    // Initial load
+    toggleScreenField();
 
-</label>
-</div>
-
-
-<!-- Buttons -->
-<div class="flex justify-end gap-3 pt-4 border-t">
-
-<a
-href="{{ route('users.index') }}"
-class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50">
-Cancel
-</a>
-
-<button
-class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-Create User
-</button>
-
-</div>
-
-</form>
-
-</div>
-
-</div>
+    // Change event
+    if (roleSelect) {
+        roleSelect.addEventListener('change', toggleScreenField);
+    }
+});
+</script>
 
 @endsection

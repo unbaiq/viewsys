@@ -23,9 +23,6 @@ class DeviceLog extends Model
     {
         return $this->belongsTo(Screen::class);
     }
-    public function lastLog()
-{
-    return $this->hasOne(DeviceLog::class)->latest();
-}
+    
 
 }

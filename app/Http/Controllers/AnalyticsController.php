@@ -7,53 +7,63 @@ use App\Models\Media;
 use App\Models\Playlist;
 use App\Models\Company;
 use App\Models\DeviceLog;
+use Illuminate\Http\Request;
 
 class AnalyticsController extends Controller
 {
 
     public function index()
     {
-
         $user = auth()->user();
 
         /*
         |--------------------------------------------------------------------------
-        | Base Query Scope
+        | BASE QUERIES
         |--------------------------------------------------------------------------
         */
-
         $screenQuery = Screen::query();
         $mediaQuery = Media::query();
         $playlistQuery = Playlist::query();
+        $logQuery = DeviceLog::query();
 
-        if($user->role !== 'superadmin'){
-            $screenQuery->where('company_id',$user->company_id);
-            $mediaQuery->where('company_id',$user->company_id);
-            $playlistQuery->where('company_id',$user->company_id);
+        // Company restriction
+        if ($user->role !== 'superadmin') {
+            $screenQuery->where('company_id', $user->company_id);
+            $mediaQuery->where('company_id', $user->company_id);
+            $playlistQuery->where('company_id', $user->company_id);
+
+            // Optional: if logs have company_id
+            if (Schema::hasColumn('device_logs', 'company_id')) {
+                $logQuery->where('company_id', $user->company_id);
+            }
         }
 
-        if($user->role === 'manager'){
-            $screenQuery->where('id',$user->screen_id);
+        // Manager restriction (single screen)
+        if ($user->role === 'manager' && $user->screen_id) {
+            $screenQuery->where('id', $user->screen_id);
+            $logQuery->where('screen_id', $user->screen_id);
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Metrics
+        | SCREEN STATS
         |--------------------------------------------------------------------------
         */
+        $totalScreens = (clone $screenQuery)->count();
 
-        $totalScreens = $screenQuery->count();
-
-        $onlineScreens = $screenQuery
-            ->clone()
-            ->where('last_seen','>',now()->subMinutes(2))
+        $onlineScreens = (clone $screenQuery)
+            ->where('last_seen', '>', now()->subMinutes(2))
             ->count();
 
         $offlineScreens = $totalScreens - $onlineScreens;
 
-        $totalMedia = $mediaQuery->count();
-
-        $totalPlaylists = $playlistQuery->count();
+        /*
+        |--------------------------------------------------------------------------
+        | MEDIA & PLAYLIST
+        |--------------------------------------------------------------------------
+        */
+        $totalMedia = (clone $mediaQuery)->count();
+        $totalPlaylists = (clone $playlistQuery)->count();
 
         $companies = $user->role === 'superadmin'
             ? Company::count()
@@ -61,33 +71,74 @@ class AnalyticsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Storage Usage
+        | STORAGE USAGE
         |--------------------------------------------------------------------------
         */
-
-        $storageUsed = $mediaQuery->sum('size');
-
-        $storageGB = round($storageUsed / 1024 / 1024 / 1024,2);
+        $storageUsed = (clone $mediaQuery)->sum('size');
+        $storageGB = round($storageUsed / 1024 / 1024 / 1024, 2);
 
         /*
         |--------------------------------------------------------------------------
-        | Device Health
+        | TODAY ACTIVITY (DAY REPORT 🔥)
         |--------------------------------------------------------------------------
         */
+        $todayLogs = (clone $logQuery)
+            ->whereDate('created_at', today());
 
-        $recentLogs = DeviceLog::latest()->take(10)->get();
+        $todayOnline = (clone $todayLogs)
+            ->where('status', 'online')
+            ->count();
 
-        return view('analytics.index',[
-            'totalScreens'=>$totalScreens,
-            'onlineScreens'=>$onlineScreens,
-            'offlineScreens'=>$offlineScreens,
-            'totalMedia'=>$totalMedia,
-            'totalPlaylists'=>$totalPlaylists,
-            'companies'=>$companies,
-            'storageGB'=>$storageGB,
-            'recentLogs'=>$recentLogs
+        $todayOffline = (clone $todayLogs)
+            ->where('status', 'offline')
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | HOURLY ACTIVITY (GRAPH DATA)
+        |--------------------------------------------------------------------------
+        */
+        $hourlyRaw = (clone $logQuery)
+            ->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
+            ->whereDate('created_at', today())
+            ->groupBy('hour')
+            ->pluck('total', 'hour')
+            ->toArray();
+
+        // Fill missing hours (0–23)
+        $hourly = [];
+        for ($i = 0; $i < 24; $i++) {
+            $hourly[$i] = $hourlyRaw[$i] ?? 0;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | RECENT DEVICE LOGS
+        |--------------------------------------------------------------------------
+        */
+        $recentLogs = (clone $logQuery)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | RESPONSE
+        |--------------------------------------------------------------------------
+        */
+        return view('analytics.index', [
+            'totalScreens'   => $totalScreens,
+            'onlineScreens'  => $onlineScreens,
+            'offlineScreens' => $offlineScreens,
+            'totalMedia'     => $totalMedia,
+            'totalPlaylists' => $totalPlaylists,
+            'companies'      => $companies,
+            'storageGB'      => $storageGB,
+            'todayOnline'    => $todayOnline,
+            'todayOffline'   => $todayOffline,
+            'hourly'         => array_values($hourly), // clean for chart
+            'recentLogs'     => $recentLogs
         ]);
-
     }
 
 }

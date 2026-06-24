@@ -12,39 +12,31 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
-    /**
-     * Mass assignable
-     */
+    protected $guard_name = 'web';
+
     protected $fillable = [
         'name',
         'email',
         'password',
         'company_id',
-        'screen_id'
+        'screen_id',
+        'is_active',
     ];
 
-    /**
-     * Hidden fields
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Casts
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+    ];
 
     /*
     |--------------------------------------------------------------------------
-    | Relationships
+    | RELATIONS
     |--------------------------------------------------------------------------
     */
 
@@ -55,33 +47,38 @@ class User extends Authenticatable
 
     public function screen()
     {
-        return $this->belongsTo(Screen::class);
+        return $this->belongsTo(\App\Models\Screen::class);
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Role Helpers
+    | ROLE HELPERS
     |--------------------------------------------------------------------------
     */
 
-    public function isSuperAdmin()
+    public function isSuperAdmin(): bool
     {
         return $this->hasRole('superadmin');
     }
 
-    public function isAdmin()
+    public function isAdmin(): bool
     {
         return $this->hasRole('admin');
     }
 
-    public function isManager()
+    public function isManager(): bool
     {
         return $this->hasRole('manager');
     }
 
-    public function clustersCreated()
-{
-    return $this->hasMany(Cluster::class,'created_by');
-}
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS HELPERS
+    |--------------------------------------------------------------------------
+    */
 
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
 }

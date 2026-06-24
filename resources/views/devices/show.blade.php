@@ -4,79 +4,81 @@
 
 @section('content')
 
-<div class="max-w-6xl mx-auto p-6 space-y-6">
+<div class="max-w-8xl mx-auto space-y-5">
 
-<!-- Device Info -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+<!-- ================= DEVICE HEADER ================= -->
+<div class="bg-white border border-slate-200 rounded-xl px-5 py-4 flex items-center justify-between">
 
-<div class="flex items-center justify-between">
+    <div>
+        <div class="text-base font-semibold text-slate-900">
+            {{ $screen->name }}
+        </div>
+        <div class="text-xs text-slate-500">
+            {{ $screen->company->name ?? '-' }}
+        </div>
+    </div>
 
-<div>
-<h2 class="text-lg font-semibold text-gray-800">
-{{ $screen->name }}
-</h2>
+    <form method="POST" action="{{ route('devices.restart',$screen) }}"
+          onsubmit="return confirm('Restart device?')">
+        @csrf
 
-<p class="text-sm text-gray-500">
-Company: {{ $screen->company->name ?? '-' }}
-</p>
-</div>
-
-<form method="POST" action="{{ route('devices.restart',$screen) }}">
-@csrf
-
-<button onclick="return confirm('Restart device?')"
-class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm">
-Restart Device
-</button>
-
-</form>
+        <button
+            class="px-4 py-2 text-xs bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+            Restart
+        </button>
+    </form>
 
 </div>
 
-</div>
 
-<!-- Logs -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+<!-- ================= LOGS ================= -->
+<div class="bg-white border border-slate-200 rounded-xl">
 
-<div class="px-6 py-5 border-b">
-<h3 class="text-md font-semibold text-gray-800">
-Device Logs
-</h3>
+<div class="px-5 py-3 border-b text-sm font-medium text-slate-700">
+    Device Logs
 </div>
 
 <div class="overflow-x-auto">
 
-<table class="w-full text-sm">
+<table class="w-full text-xs">
 
-<thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+<thead class="bg-slate-50 text-slate-500 uppercase tracking-wide">
 <tr>
-<th class="px-6 py-3 text-left">Time</th>
-<th class="px-6 py-3 text-left">Event</th>
-<th class="px-6 py-3 text-left">Details</th>
+    <th class="px-5 py-3 text-left">Time</th>
+    <th class="text-left">Event</th>
+    <th class="text-left">Details</th>
 </tr>
 </thead>
 
 <tbody class="divide-y">
 
-@foreach($logs as $log)
+@forelse($logs as $log)
 
-<tr>
+<tr class="hover:bg-slate-50">
 
-<td class="px-6 py-4 text-gray-500">
-{{ $log->created_at->format('d M Y H:i') }}
+<td class="px-5 py-3 text-slate-500">
+    {{ $log->created_at->format('d M Y, H:i') }}
 </td>
 
-<td class="px-6 py-4 font-medium text-gray-700">
-{{ $log->event ?? 'Activity' }}
+<td class="font-medium text-slate-700">
+    {{ $log->event ?? 'Activity' }}
 </td>
 
-<td class="px-6 py-4 text-gray-500">
-{{ $log->message ?? '-' }}
+<td class="text-slate-500">
+    {{ $log->message ?? '-' }}
 </td>
 
 </tr>
 
-@endforeach
+@empty
+
+<tr>
+<td colspan="3" class="text-center py-12 text-slate-400">
+    No logs available
+</td>
+</tr>
+
+@endforelse
 
 </tbody>
 
@@ -85,8 +87,8 @@ Device Logs
 </div>
 
 @if($logs->hasPages())
-<div class="px-6 py-4 border-t">
-{{ $logs->links() }}
+<div class="px-5 py-3 border-t bg-slate-50">
+    {{ $logs->links() }}
 </div>
 @endif
 

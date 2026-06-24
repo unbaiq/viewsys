@@ -4,29 +4,86 @@
 
 @section('content')
 
-<div class="max-w-2xl mx-auto bg-white rounded-xl shadow p-6">
+<div class="max-w-4xl mx-auto space-y-5">
 
-@if($media->type === 'image')
+<!-- ================= PREVIEW ================= -->
+<div class="bg-white border border-slate-200 rounded-xl p-4">
 
-<img
-src="{{ asset('storage/'.$media->file_path) }}"
-class="rounded-lg mb-6">
+    @if($media->type === 'image')
 
-@else
+        <img
+            src="{{ asset('storage/'.$media->file_path) }}"
+            class="w-full max-h-[400px] object-contain rounded-lg">
 
-<video controls class="w-full rounded-lg mb-6">
-<source src="{{ asset('storage/'.$media->file_path) }}">
-</video>
+    @else
 
-@endif
+        <video controls class="w-full max-h-[400px] rounded-lg">
+            <source src="{{ asset('storage/'.$media->file_path) }}">
+        </video>
 
-<h2 class="text-lg font-semibold">
-{{ $media->name }}
-</h2>
+    @endif
 
-<p class="text-sm text-gray-500 mt-1">
-{{ number_format($media->size/1024/1024,2) }} MB
-</p>
+</div>
+
+
+<!-- ================= INFO ================= -->
+<div class="bg-white border border-slate-200 rounded-xl p-5">
+
+    <div class="text-base font-semibold text-slate-900">
+        {{ $media->name }}
+    </div>
+
+    <div class="mt-2 text-xs text-slate-500 space-y-1">
+
+        <div>
+            Size: {{ number_format($media->size/1024/1024,2) }} MB
+        </div>
+
+        <div>
+            Type: {{ strtoupper($media->type) }}
+        </div>
+
+        <div>
+            Uploaded: {{ $media->created_at->diffForHumans() }}
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= ACTIONS ================= -->
+<div class="flex items-center justify-between">
+
+    <a href="{{ route('media.index') }}"
+       class="text-xs text-slate-500 hover:text-slate-700">
+        ← Back
+    </a>
+
+    <div class="flex gap-2">
+
+        <a href="{{ asset('storage/'.$media->file_path) }}"
+           download
+           class="px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+            Download
+        </a>
+
+        <form method="POST"
+              action="{{ route('media.destroy',$media) }}"
+              onsubmit="return confirm('Delete this media?')">
+            @csrf
+            @method('DELETE')
+
+            <button
+                class="px-4 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">
+                Delete
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
 
 </div>
 

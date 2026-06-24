@@ -4,51 +4,57 @@
 
 @section('content')
 
-<div class="max-w-7xl mx-auto p-6">
 
-@if ($errors->any())
-<div class="mb-4 p-4 rounded bg-red-50 border border-red-200 text-red-700">
-<ul class="list-disc ml-5 text-sm">
-@foreach ($errors->all() as $error)
-<li>{{ $error }}</li>
-@endforeach
-</ul>
+<div class="w-full h-[calc(100vh-80px)] overflow-y-auto px-3 sm:px-4 md:px-6 lg:px-8 mx-auto">
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm">
+<!-- HEADER -->
+<div class="px-4 sm:px-5 py-4 border-b">
+    <h2 class="text-sm sm:text-base font-semibold text-slate-900">Edit Cluster</h2>
+    <p class="text-xs text-slate-500">Update cluster & layout</p>
 </div>
-@endif
 
-<form method="POST" action="{{ route('clusters.update',$cluster) }}" class="space-y-8">
+<form method="POST" action="{{ route('clusters.update',$cluster) }}" class="p-4 sm:p-5">
 @csrf
 @method('PUT')
 
-<div class="grid md:grid-cols-2 gap-6">
+<!-- GRID -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-<div>
-<label class="text-sm font-medium">Cluster Name</label>
-<input name="name"
-value="{{ old('name',$cluster->name) }}"
-required
-class="border rounded-lg p-2 w-full mt-1">
+{{-- COMPANY --}}
+@if(auth()->user()->role === 'superadmin')
+<div class="sm:col-span-2">
+    <label class="text-xs font-medium text-slate-600">Company</label>
+    <select name="company_id" id="companySelect"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+
+        <option value="">Select Company</option>
+
+        @foreach($companies as $company)
+            <option value="{{ $company->id }}"
+                {{ $cluster->company_id == $company->id ? 'selected' : '' }}>
+                {{ $company->name }}
+            </option>
+        @endforeach
+
+    </select>
+</div>
+@endif
+
+{{-- NAME --}}
+<div class="sm:col-span-2">
+    <label class="text-xs font-medium text-slate-600">Cluster Name</label>
+    <input name="name"
+        value="{{ old('name',$cluster->name) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
 </div>
 
-<div>
-<label class="text-sm font-medium">Location</label>
-<input name="location"
-value="{{ old('location',$cluster->location) }}"
-class="border rounded-lg p-2 w-full mt-1">
 </div>
 
-</div>
-
-<div>
-<label>Description</label>
-<textarea name="description"
-class="border rounded-lg p-2 w-full mt-1">{{ old('description',$cluster->description) }}</textarea>
-</div>
 
 {{-- Layouts --}}
-<div>
+<div class="mt-6">
 
-<label class="block font-medium mb-4">
+<label class="block font-medium mb-3 text-sm sm:text-base">
 Screen Layout
 </label>
 
@@ -56,224 +62,415 @@ Screen Layout
 $layout = old('layout', $cluster->type ?? 'fullscreen');
 @endphp
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+<div class="overflow-x-auto">
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 min-w-[600px] sm:min-w-0">
+
+@foreach([
+'fullscreen'=>'Full Screen',
+'half'=>'Half Split',
+'sidebar'=>'Sidebar',
+'ticker'=>'Ticker',
+'grid'=>'4 Grid',
+'header'=>'Header',
+'triple'=>'Triple',
+'menu'=>'Menu Board'
+] as $key=>$label)
 
 <label class="cursor-pointer">
-<input type="radio" name="layout" value="fullscreen"
+<input type="radio" name="layout" value="{{ $key }}"
 class="peer hidden layoutRadio"
-{{ $layout=='fullscreen'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video bg-gray-200 rounded mb-2"></div>
-<p class="text-center text-sm">Full Screen</p>
-</div>
-</label>
+{{ $layout==$key?'checked':'' }}>
 
-<label class="cursor-pointer">
-<input type="radio" name="layout" value="half"
-class="peer hidden layoutRadio"
-{{ $layout=='half'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video flex rounded overflow-hidden mb-2">
+<div class="border rounded-xl p-2 sm:p-3 peer-checked:border-indigo-600 peer-checked:ring-2 transition">
+
+<div class="aspect-video rounded mb-2 overflow-hidden">
+
+@if($key=='fullscreen')
+<div class="bg-gray-300 w-full h-full"></div>
+
+@elseif($key=='half')
+<div class="flex h-full">
 <div class="w-1/2 bg-gray-300"></div>
 <div class="w-1/2 bg-gray-400"></div>
 </div>
-<p class="text-center text-sm">Half Split</p>
-</div>
-</label>
 
-<label class="cursor-pointer">
-<input type="radio" name="layout" value="sidebar"
-class="peer hidden layoutRadio"
-{{ $layout=='sidebar'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video flex rounded overflow-hidden mb-2">
+@elseif($key=='sidebar')
+<div class="flex h-full">
 <div class="w-3/4 bg-gray-300"></div>
 <div class="w-1/4 bg-gray-500"></div>
 </div>
-<p class="text-center text-sm">Sidebar</p>
-</div>
-</label>
 
-<label class="cursor-pointer">
-<input type="radio" name="layout" value="ticker"
-class="peer hidden layoutRadio"
-{{ $layout=='ticker'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video flex flex-col rounded overflow-hidden mb-2">
+@elseif($key=='ticker')
+<div class="flex flex-col h-full">
 <div class="flex-1 bg-gray-300"></div>
-<div class="h-6 bg-gray-600"></div>
+<div class="h-5 bg-gray-600"></div>
 </div>
-<p class="text-center text-sm">Ticker</p>
-</div>
-</label>
 
-<label class="cursor-pointer">
-<input type="radio" name="layout" value="grid"
-class="peer hidden layoutRadio"
-{{ $layout=='grid'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video grid grid-cols-2 gap-1 mb-2">
+@elseif($key=='grid')
+<div class="grid grid-cols-2 gap-1 h-full">
 <div class="bg-gray-300"></div>
 <div class="bg-gray-400"></div>
 <div class="bg-gray-400"></div>
 <div class="bg-gray-300"></div>
 </div>
-<p class="text-center text-sm">4 Grid</p>
-</div>
-</label>
 
-<label class="cursor-pointer">
-<input type="radio" name="layout" value="header"
-class="peer hidden layoutRadio"
-{{ $layout=='header'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video flex flex-col mb-2">
-<div class="h-6 bg-gray-500"></div>
+@elseif($key=='header')
+<div class="flex flex-col h-full">
+<div class="h-5 bg-gray-500"></div>
 <div class="flex-1 bg-gray-300"></div>
 </div>
-<p class="text-center text-sm">Header</p>
-</div>
-</label>
 
-<label class="cursor-pointer">
-<input type="radio" name="layout" value="triple"
-class="peer hidden layoutRadio"
-{{ $layout=='triple'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video flex mb-2">
+@elseif($key=='triple')
+<div class="flex h-full">
 <div class="w-1/3 bg-gray-300"></div>
 <div class="w-1/3 bg-gray-400"></div>
 <div class="w-1/3 bg-gray-500"></div>
 </div>
-<p class="text-center text-sm">Triple</p>
-</div>
-</label>
 
-<label class="cursor-pointer">
-<input type="radio" name="layout" value="menu"
-class="peer hidden layoutRadio"
-{{ $layout=='menu'?'checked':'' }}>
-<div class="border rounded-xl p-3 peer-checked:border-blue-600 peer-checked:ring-2">
-<div class="aspect-video flex mb-2">
+@elseif($key=='menu')
+<div class="flex h-full">
 <div class="w-1/4 bg-gray-500"></div>
 <div class="flex-1 bg-gray-300"></div>
 </div>
-<p class="text-center text-sm">Menu Board</p>
+@endif
+
+</div>
+
+<p class="text-center text-xs sm:text-sm">{{ $label }}</p>
+
 </div>
 </label>
-
-</div>
-
-@error('layout')
-<p class="text-red-500 text-sm mt-2">{{ $message }}</p>
-@enderror
-
-</div>
-
-{{-- Header Text --}}
-<div id="headerField" style="display:none;">
-<label class="block text-sm font-medium mb-1">Header Text</label>
-
-<input
-type="text"
-name="header_text"
-value="{{ old('header_text',$cluster->header_text) }}"
-class="border rounded-lg p-2 w-full"
-placeholder="Welcome message">
-</div>
-
-{{-- Ticker Text --}}
-<div id="tickerField" style="display:none;">
-
-<label class="block text-sm font-medium mb-1">Ticker Text</label>
-
-<textarea
-name="ticker_text"
-rows="3"
-class="border rounded-lg p-2 w-full"
-placeholder="Sale Today | Offers | Announcement">{{ old('ticker_text',$cluster->ticker_text) }}</textarea>
-
-</div>
-
-{{-- Screens --}}
-<div>
-
-<label class="block font-medium mb-2">
-Assign Screens
-</label>
-
-@php
-$selected = old('screens',$assignedScreens ?? []);
-@endphp
-
-<select name="screens[]" multiple
-class="border rounded-lg p-3 w-full h-40">
-
-@foreach($screens as $screen)
-
-<option value="{{ $screen->id }}"
-{{ in_array($screen->id,$selected) ? 'selected' : '' }}>
-{{ $screen->name }}
-</option>
 
 @endforeach
 
-</select>
+</div>
+</div>
 
 </div>
 
-{{-- Active --}}
-<div class="flex items-center gap-2">
 
-<input type="checkbox"
-name="is_active"
-value="1"
-{{ old('is_active',$cluster->is_active) ? 'checked' : '' }}>
-
-<label class="text-sm">Active</label>
-
+{{-- CONDITIONAL FIELDS --}}
+<div id="headerField" class="hidden mt-4">
+    <label class="text-xs text-slate-600">Header Text</label>
+    <input type="text" name="header_text"
+        value="{{ old('header_text',$cluster->header_text) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
 </div>
 
-<div>
-<button class="bg-blue-600 text-white px-6 py-3 rounded-lg">
-Update Cluster
-</button>
+<div id="tickerField" class="hidden mt-4">
+    <label class="text-xs text-slate-600">Ticker Text</label>
+    <textarea name="ticker_text" rows="2"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">{{ old('ticker_text',$cluster->ticker_text) }}</textarea>
+</div>
+{{-- LAYOUT MEDIA --}}
+@php
+$layoutMedia = [];
+
+foreach($cluster->layouts as $layoutRow) {
+$layoutMedia[$layoutRow->zone_name] =
+$layoutRow->media->pluck('id')->toArray();
+}
+@endphp
+
+<div id="layoutMediaContainer" class="mt-6"></div>
+
+
+{{-- SCREENS --}}
+<div class="mt-5">
+    <label class="text-xs font-medium text-slate-600">Assign Screens</label>
+
+    @php
+    $selected = old('screens', $assignedScreens ?? []);
+    @endphp
+
+    <select name="screens[]" id="screenSelect" multiple
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-28 sm:h-32">
+
+        @foreach($screens as $screen)
+            <option value="{{ $screen->id }}"
+                {{ in_array($screen->id,$selected) ? 'selected' : '' }}>
+                {{ $screen->name }}
+            </option>
+        @endforeach
+
+    </select>
+</div>
+
+
+{{-- ACTIVE --}}
+<div class="flex items-center gap-2 mt-3 text-sm">
+    <input type="checkbox" name="is_active" value="1"
+        {{ old('is_active',$cluster->is_active) ? 'checked' : '' }}>
+    <label>Active</label>
+</div>
+
+
+{{-- ACTIONS --}}
+<div class="flex flex-col sm:flex-row justify-end gap-2 mt-6 border-t pt-4">
+
+    <a href="{{ route('clusters.index') }}"
+       class="w-full sm:w-auto text-center px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">
+        Cancel
+    </a>
+
+    <button class="w-full sm:w-auto px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        Update
+    </button>
+
 </div>
 
 </form>
 
 </div>
 
+</div>
+
+
 <script>
 
-function toggleLayoutFields(){
+const existingMedia = @json($layoutMedia);
 
-let layout = document.querySelector('input[name="layout"]:checked')?.value;
+const mediaOptions = `
+<option value="">Select Media</option>
+@foreach($media as $item)
+<option value="{{ $item->id }}">
+    {{ $item->name }} ({{ ucfirst($item->type) }})
+</option>
+@endforeach
+`;
 
-let header = document.getElementById('headerField');
-let ticker = document.getElementById('tickerField');
+function zone(title,key,selected = [])
+{
+    let html = '';
 
-if(!header || !ticker) return;
+    @foreach($media as $item)
+        html += `
+        <option value="{{ $item->id }}"
+        ${selected.includes({{ $item->id }}) ? 'selected' : ''}>
+            {{ $item->name }} ({{ ucfirst($item->type) }})
+        </option>`;
+    @endforeach
 
-header.style.display='none';
-ticker.style.display='none';
+    return `
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
 
-if(layout === 'header'){
-header.style.display='block';
+            <label class="block font-medium text-sm mb-2">
+                ${title}
+            </label>
+
+            <select
+                multiple
+                name="media_sections[${key}][]"
+                class="w-full border rounded-lg h-40">
+
+                ${html}
+
+            </select>
+
+            <p class="text-xs text-slate-500 mt-2">
+                Hold CTRL/CMD to select multiple media items.
+            </p>
+
+        </div>
+    `;
 }
 
-if(layout === 'ticker'){
-ticker.style.display='block';
+function renderMediaSections(layout)
+{
+    let html = '';
+
+    switch(layout)
+    {
+        case 'fullscreen':
+
+            html = `
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-sm text-blue-700">
+                    Full Screen content will be managed by Schedule.
+                </p>
+            </div>`;
+            break;
+
+        case 'half':
+
+            html = `
+            <div class="grid md:grid-cols-1 gap-4">
+                ${zone(
+                    'Right Zone Media',
+                    'right',
+                    existingMedia.right || []
+                )}
+            </div>`;
+            break;
+
+        case 'sidebar':
+
+            html = `
+            <div class="grid md:grid-cols-1 gap-4">
+                ${zone(
+                    'Sidebar Media',
+                    'sidebar',
+                    existingMedia.sidebar || []
+                )}
+            </div>`;
+            break;
+
+        case 'header':
+
+            html = `
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-green-700">
+                    Header content will come from Header Text.
+                </p>
+            </div>`;
+            break;
+
+        case 'ticker':
+
+            html = `
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm text-green-700">
+                    Ticker content will come from Ticker Text.
+                </p>
+            </div>`;
+            break;
+
+        case 'triple':
+
+            html = `
+            <div class="grid md:grid-cols-2 gap-4">
+
+                ${zone(
+                    'Center Zone Media',
+                    'center',
+                    existingMedia.center || []
+                )}
+
+                ${zone(
+                    'Right Zone Media',
+                    'right',
+                    existingMedia.right || []
+                )}
+
+            </div>`;
+            break;
+
+        case 'grid':
+
+            html = `
+            <div class="grid md:grid-cols-2 gap-4">
+
+                ${zone(
+                    'Top Right Media',
+                    'top_right',
+                    existingMedia.top_right || []
+                )}
+
+                ${zone(
+                    'Bottom Left Media',
+                    'bottom_left',
+                    existingMedia.bottom_left || []
+                )}
+
+                ${zone(
+                    'Bottom Right Media',
+                    'bottom_right',
+                    existingMedia.bottom_right || []
+                )}
+
+            </div>`;
+            break;
+
+        case 'menu':
+
+            html = `
+            <div class="grid md:grid-cols-1 gap-4">
+
+                ${zone(
+                    'Left Menu Media',
+                    'left',
+                    existingMedia.left || []
+                )}
+
+            </div>`;
+            break;
+    }
+
+    document.getElementById(
+        'layoutMediaContainer'
+    ).innerHTML = html;
 }
 
+function toggleLayoutFields()
+{
+    let layout =
+        document.querySelector(
+            'input[name="layout"]:checked'
+        )?.value;
+
+    document.getElementById(
+        'headerField'
+    ).classList.add('hidden');
+
+    document.getElementById(
+        'tickerField'
+    ).classList.add('hidden');
+
+    if(layout === 'header')
+    {
+        document.getElementById(
+            'headerField'
+        ).classList.remove('hidden');
+    }
+
+    if(layout === 'ticker')
+    {
+        document.getElementById(
+            'tickerField'
+        ).classList.remove('hidden');
+    }
+
+    renderMediaSections(layout);
 }
 
-document.querySelectorAll('.layoutRadio').forEach(el=>{
-el.addEventListener('change',toggleLayoutFields);
+document.querySelectorAll('.layoutRadio')
+.forEach(el => {
+    el.addEventListener(
+        'change',
+        toggleLayoutFields
+    );
 });
 
-document.addEventListener('DOMContentLoaded', toggleLayoutFields);
+toggleLayoutFields();
+
+document.getElementById('companySelect')
+?.addEventListener('change', function () {
+
+    let companyId = this.value;
+    let screenSelect =
+        document.getElementById('screenSelect');
+
+    if (!companyId) return;
+
+    fetch(`/get-screens/${companyId}`)
+    .then(res => res.json())
+    .then(data => {
+
+        screenSelect.innerHTML = '';
+
+        data.forEach(screen => {
+
+            screenSelect.innerHTML += `
+                <option value="${screen.id}">
+                    ${screen.name}
+                </option>
+            `;
+        });
+
+    });
+});
 
 </script>
+
 
 @endsection

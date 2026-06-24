@@ -4,135 +4,103 @@
 
 @section('content')
 
-<div class="min-h-[70vh] flex items-center justify-center">
+<div class="max-w-8xl mx-auto">
 
-<div class="w-full max-w-2xl bg-white shadow-sm border border-gray-100 rounded-2xl p-8">
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm">
 
-<!-- TITLE -->
-<div class="mb-8 text-center">
-<h2 class="text-2xl font-bold text-gray-800">
-Edit Subscription Plan
-</h2>
-<p class="text-sm text-gray-500 mt-1">
-Update pricing, limits, and features for this plan.
-</p>
+<!-- HEADER -->
+<div class="px-5 py-4 border-b">
+    <h2 class="text-base font-semibold text-slate-900">Edit Plan</h2>
+    <p class="text-xs text-slate-500">Update pricing and limits</p>
 </div>
 
-
-<form method="POST" action="{{ route('plans.update',$plan) }}" class="space-y-6">
+<!-- FORM -->
+<form method="POST" action="{{ route('plans.update',$plan) }}" class="p-5">
 @csrf
 @method('PUT')
 
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
 <!-- NAME -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Plan Name
-</label>
+<div class="md:col-span-2">
+    <label class="text-xs font-medium text-slate-600">Plan Name</label>
+    <input name="name"
+        value="{{ old('name',$plan->name) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('name') border-red-500 @enderror">
 
-<input
-name="name"
-value="{{ old('name',$plan->name) }}"
-class="w-full border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2 outline-none">
+    @error('name')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
 </div>
-
 
 <!-- PRICE -->
 <div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Monthly Price
-</label>
+    <label class="text-xs font-medium text-slate-600">Monthly Price (₹)</label>
+    <input name="price"
+        value="{{ old('price',$plan->price) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('price') border-red-500 @enderror">
 
-<input
-name="price"
-value="{{ old('price',$plan->price) }}"
-class="w-full border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2 outline-none">
+    @error('price')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
 </div>
-
-
-<!-- LIMITS -->
-<div class="grid grid-cols-2 gap-4">
-
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Screen Limit
-</label>
-
-<input
-name="screen_limit"
-value="{{ old('screen_limit',$plan->screen_limit) }}"
-class="w-full border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2 outline-none">
-</div>
-
-
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Storage Limit (MB)
-</label>
-
-<input
-name="storage_limit"
-value="{{ old('storage_limit',$plan->storage_limit) }}"
-class="w-full border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2 outline-none">
-</div>
-
-</div>
-
-
-<!-- FEATURES -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Features
-</label>
-
-<input
-name="features"
-value="{{ old('features', implode(',', $plan->features ?? [])) }}"
-class="w-full border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2 outline-none">
-
-<p class="text-xs text-gray-400 mt-1">
-Separate features with commas.
-</p>
-</div>
-
 
 <!-- STATUS -->
 <div>
-<label class="block text-sm font-medium text-gray-700 mb-1">
-Status
-</label>
+    <label class="text-xs font-medium text-slate-600">Status</label>
+    <select name="is_active"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 
-<select
-name="is_active"
-class="w-full border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2 outline-none">
+        <option value="1" {{ old('is_active',$plan->is_active)=='1'?'selected':'' }}>Active</option>
+        <option value="0" {{ old('is_active',$plan->is_active)=='0'?'selected':'' }}>Disabled</option>
 
-<option value="1" {{ $plan->is_active ? 'selected' : '' }}>
-Active
-</option>
-
-<option value="0" {{ !$plan->is_active ? 'selected' : '' }}>
-Disabled
-</option>
-
-</select>
+    </select>
 </div>
 
+<!-- SCREEN -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Screen Limit</label>
+    <input name="screen_limit"
+        value="{{ old('screen_limit',$plan->screen_limit) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- STORAGE -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Storage (MB)</label>
+    <input name="storage_limit"
+        value="{{ old('storage_limit',$plan->storage_limit) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- FEATURES -->
+<div class="md:col-span-2">
+    <label class="text-xs font-medium text-slate-600">Features</label>
+    <input name="features"
+        value="{{ old('features', implode(',', $plan->features ?? [])) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+
+    <p class="text-[11px] text-slate-500 mt-1">
+        Separate features with commas
+    </p>
+</div>
+
+</div>
 
 <!-- ACTIONS -->
-<div class="flex items-center justify-between pt-4">
+<div class="flex justify-end gap-2 mt-5 border-t pt-4">
 
-<a href="{{ route('plans.index') }}"
-class="text-sm text-gray-500 hover:text-gray-700">
-Cancel
-</a>
+    <a href="{{ route('plans.index') }}"
+       class="px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">
+        Cancel
+    </a>
 
-<button
-class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2 rounded-lg shadow-sm transition">
-Update Plan
-</button>
+    <button
+        class="px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        Update
+    </button>
 
 </div>
-
 
 </form>
 

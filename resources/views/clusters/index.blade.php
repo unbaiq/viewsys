@@ -4,148 +4,211 @@
 
 @section('content')
 
-<div class="p-6 max-w-8xl mx-auto">
+<div class="max-w-8xl mx-auto space-y-4">
 
-    <!-- Top Bar -->
-    <div class="flex items-center justify-between mb-6">
-
-        <div>
-            <h1 class="text-xl font-semibold text-gray-800">Clusters</h1>
-            <p class="text-sm text-gray-500">Manage your screen clusters</p>
-        </div>
-
-        <a href="{{ route('clusters.create') }}"
-           class="bg-primary text-white px-4 py-2 rounded-lg shadow hover:opacity-90">
-            + Create Cluster
-        </a>
-
-    </div>
-
-
-    <!-- Success Message -->
     @if(session('success'))
-        <div class="mb-4 p-3 rounded bg-green-50 text-green-700 border border-green-200">
-            {{ session('success') }}
+        <div id="flash-alert" class="flex items-center p-4 text-sm text-green-800 rounded-xl bg-green-50 border border-green-200 transition-opacity duration-500" role="alert">
+            <i class="fa fa-check-circle mr-2"></i>
+            <div>
+                <span class="font-semibold">Success!</span> {{ session('success') }}
+            </div>
         </div>
     @endif
 
+    @if(session('error'))
+        <div id="flash-alert" class="flex items-center p-4 text-sm text-red-800 rounded-xl bg-red-50 border border-red-200 transition-opacity duration-500" role="alert">
+            <i class="fa fa-exclamation-circle mr-2"></i>
+            <div>
+                <span class="font-semibold">Alert!</span> {{ session('error') }}
+            </div>
+        </div>
+    @endif
 
-    <!-- Table -->
-    <div class="bg-white border rounded-xl overflow-hidden">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm">
 
-        <table class="w-full">
+        <div class="px-6 py-4 border-b flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-900">Clusters</h2>
+                <p class="text-xs text-slate-500">Manage screen groups & monitor devices</p>
+            </div>
 
-            <thead class="bg-gray-50 text-left text-sm text-gray-600">
-                <tr>
-                    <th class="p-4">Cluster</th>
-                    <th class="p-4">Location</th>
-                    <th class="p-4">Layout</th>
-                    <th class="p-4">Screens</th>
-                    <th class="p-4">Status</th>
-                    <th class="p-4 text-right">Actions</th>
-                </tr>
-            </thead>
+            <a href="{{ route('clusters.create') }}"
+               class="bg-indigo-600 text-white text-xs px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                <i class="fa-solid fa-plus mr-1"></i> Add Cluster
+            </a>
+        </div>
 
-            <tbody class="divide-y">
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead class="bg-slate-50 text-slate-500 uppercase tracking-wide text-[11px]">
+                    <tr>
+                        <th class="px-6 py-3 text-left">Cluster</th>
+                        <th class="text-left">Layout</th>
+                        <th class="text-left">Screens</th>
+                        <th class="text-left">Status</th>
+                        <th class="text-right pr-6">Actions</th>
+                    </tr>
+                </thead>
 
+                <tbody class="divide-y">
                 @forelse($clusters as $cluster)
+                    <tr class="hover:bg-slate-50 transition">
 
-                <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-slate-800">
+                                {{ $cluster->name }}
+                            </div>
+                            <div class="text-[11px] text-slate-500">
+                                {{ $cluster->description ?? 'No description' }}
+                            </div>
+                        </td>
 
-                    <!-- Name -->
-                    <td class="p-4">
-                        <div class="font-medium text-gray-800">
-                            {{ $cluster->name }}
-                        </div>
-
-                        <div class="text-xs text-gray-500">
-                            {{ $cluster->description }}
-                        </div>
-                    </td>
-
-                    <!-- Location -->
-                    <td class="p-4 text-sm text-gray-600">
-                        {{ $cluster->location ?? '-' }}
-                    </td>
-
-                    <!-- Layout -->
-                    <td class="p-4 text-sm capitalize">
-                        {{ str_replace('_',' ',$cluster->type) }}
-                    </td>
-
-                    <!-- Screen Count -->
-                    <td class="p-4 text-sm">
-                        {{ $cluster->screens_count ?? 0 }} Screens
-                    </td>
-
-                    <!-- Status -->
-                    <td class="p-4">
-
-                        @if($cluster->is_active)
-                            <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
-                                Active
+                        <td>
+                            <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium capitalize text-[11px]">
+                                {{ str_replace('_',' ',$cluster->type) }}
                             </span>
-                        @else
-                            <span class="px-2 py-1 text-xs rounded bg-gray-200 text-gray-600">
-                                Disabled
-                            </span>
-                        @endif
+                        </td>
 
-                    </td>
+                        <td class="py-3">
+                            <div class="flex flex-wrap gap-2 max-w-[320px]">
+                                @forelse($cluster->screens->take(3) as $screen)
+                                    <div 
+                                        class="flex items-center gap-2 px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md cursor-pointer transition"
+                                        onclick="window.location='{{ route('screens.show',$screen->id) }}'"
+                                        title="IP: {{ $screen->ip ?? '-' }}">
 
-                    <!-- Actions -->
-                    <td class="p-4 text-right space-x-2">
+                                        <i class="fa-solid fa-tv text-[10px] text-slate-500"></i>
+                                        <span class="text-[11px] font-medium text-slate-700">
+                                            {{ $screen->name }}
+                                        </span>
 
-                        <a href="{{ route('clusters.show',$cluster) }}"
-                           class="text-blue-600 text-sm hover:underline">
-                           View
-                        </a>
+                                        @if($screen->is_online ?? false)
+                                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                        @else
+                                            <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                                        @endif
+                                    </div>
+                                @empty
+                                    <span class="text-[11px] text-slate-400">No screens</span>
+                                @endforelse
 
-                        <a href="{{ route('clusters.edit',$cluster) }}"
-                           class="text-indigo-600 text-sm hover:underline">
-                           Edit
-                        </a>
+                                @if($cluster->screens->count() > 3)
+                                    <span class="text-[11px] text-slate-500 px-2 py-1">
+                                        +{{ $cluster->screens->count() - 3 }} more
+                                    </span>
+                                @endif
+                            </div>
+                        </td>
 
-                        <form action="{{ route('clusters.destroy',$cluster) }}"
-                              method="POST"
-                              class="inline">
+                        <td>
+                            @if($cluster->is_active)
+                                <span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium text-[11px]">
+                                    Active
+                                </span>
+                            @else
+                                <span class="px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 font-medium text-[11px]">
+                                    Disabled
+                                </span>
+                            @endif
+                        </td>
 
-                            @csrf
-                            @method('DELETE')
+                        <td class="text-right pr-6">
+                            <div class="flex justify-end gap-2">
+                                <a href="{{ route('clusters.show',$cluster) }}"
+                                   class="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                                   title="View">
+                                    <i class="fa-solid fa-eye text-sm"></i>
+                                </a>
 
-                            <button onclick="return confirm('Delete this cluster?')"
-                                    class="text-red-600 text-sm hover:underline">
-                                Delete
-                            </button>
+                                <a href="{{ route('clusters.edit',$cluster) }}"
+                                   class="p-2 rounded-lg hover:bg-indigo-50 text-indigo-600 transition"
+                                   title="Edit">
+                                    <i class="fa-solid fa-pen-to-square text-sm"></i>
+                                </a>
 
-                        </form>
+                                <button type="button"
+                                        onclick="confirmClusterDelete('{{ route('clusters.destroy', $cluster) }}', '{{ addslashes($cluster->name) }}')"
+                                        class="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                        title="Delete">
+                                    <i class="fa-solid fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                        </td>
 
-                    </td>
-
-                </tr>
-
+                    </tr>
                 @empty
-
-                <tr>
-                    <td colspan="6" class="p-10 text-center text-gray-500">
-                        No clusters created yet
-                    </td>
-                </tr>
-
+                    <tr>
+                        <td colspan="5" class="text-center py-16 text-slate-400">
+                            <div class="flex flex-col items-center gap-3">
+                                <i class="fa-solid fa-layer-group text-2xl"></i>
+                                <span>No clusters found</span>
+                                <a href="{{ route('clusters.create') }}" class="text-xs text-indigo-600 hover:underline">
+                                    Create your first cluster
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
                 @endforelse
+                </tbody>
+            </table>
+        </div>
 
-            </tbody>
-
-        </table>
+        <div class="px-6 py-3 border-t bg-slate-50">
+            {{ $clusters->links() }}
+        </div>
 
     </div>
-
-
-    <!-- Pagination -->
-    <div class="mt-6">
-        {{ $clusters->links() }}
-    </div>
-
 </div>
+
+<div id="deleteClusterModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-md p-5 transform transition-all space-y-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+                <i class="fa-solid fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-slate-900">Delete Cluster Group</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Are you sure you want to permanently delete <span id="deleteClusterName" class="font-medium text-slate-800"></span>? Screens inside this cluster will be ungrouped but won't be deleted.</p>
+            </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 pt-2">
+            <button type="button" onclick="closeClusterDeleteModal()" class="px-3 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-medium transition">
+                Cancel
+            </button>
+            <form id="deleteClusterForm" method="POST" action="">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="px-3 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg text-xs font-medium transition">
+                    Delete Cluster
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle Auto-fading Flash Messages
+    document.addEventListener("DOMContentLoaded", function() {
+        const alert = document.getElementById('flash-alert');
+        if (alert) {
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 4000);
+        }
+    });
+
+    // Custom Modal Controls
+    function confirmClusterDelete(url, name) {
+        document.getElementById('deleteClusterName').innerText = name;
+        document.getElementById('deleteClusterForm').setAttribute('action', url);
+        document.getElementById('deleteClusterModal').classList.remove('hidden');
+    }
+
+    function closeClusterDeleteModal() {
+        document.getElementById('deleteClusterModal').classList.add('hidden');
+    }
+</script>
 
 @endsection

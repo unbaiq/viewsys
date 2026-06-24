@@ -12,16 +12,91 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('schedules', function (Blueprint $table) {
+
             $table->id();
-            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('screen_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('playlist_id')->constrained()->cascadeOnDelete();
-            $table->date('start_date');
+
+            /*
+            |--------------------------------------------------------------------------
+            | RELATIONS
+            |--------------------------------------------------------------------------
+            */
+
+            $table->foreignId('company_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('screen_id')
+                ->nullable() // ✅ allow cluster-based schedule
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->foreignId('cluster_id')
+                ->nullable() // ✅ IMPORTANT (used in your controller)
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->foreignId('playlist_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            /*
+            |--------------------------------------------------------------------------
+            | DATE RANGE (OPTIONAL = ALWAYS PLAY)
+            |--------------------------------------------------------------------------
+            */
+
+            $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
+
+            /*
+            |--------------------------------------------------------------------------
+            | TIME RANGE (OPTIONAL)
+            |--------------------------------------------------------------------------
+            */
+
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
-            $table->string('days_of_week')->nullable();
+
+            /*
+            |--------------------------------------------------------------------------
+            | DAYS (JSON ARRAY → ["mon","tue"])
+            |--------------------------------------------------------------------------
+            */
+
+            $table->json('days_of_week')->nullable();
+
+            /*
+            |--------------------------------------------------------------------------
+            | FLAGS
+            |--------------------------------------------------------------------------
+            */
+
+            $table->boolean('is_default')->default(false); // ✅ fallback schedule
+
+            /*
+            |--------------------------------------------------------------------------
+            | PRIORITY
+            |--------------------------------------------------------------------------
+            */
+
             $table->integer('priority')->default(1);
+
+            /*
+            |--------------------------------------------------------------------------
+            | PERFORMANCE INDEXES 🔥
+            |--------------------------------------------------------------------------
+            */
+
+            $table->index(['screen_id', 'cluster_id']);
+            $table->index(['start_date', 'end_date']);
+            $table->index('priority');
+
+            /*
+            |--------------------------------------------------------------------------
+            | TIMESTAMPS
+            |--------------------------------------------------------------------------
+            */
+
             $table->timestamps();
         });
     }

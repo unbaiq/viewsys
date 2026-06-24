@@ -4,106 +4,192 @@
 
 @section('content')
 
-<div class="max-w-2xl mx-auto bg-white rounded-xl shadow p-8">
+<div class="max-w-8xl mx-auto pb-20"> <!-- ✅ scroll safe -->
 
-<h2 class="text-xl font-semibold mb-6">Create Company</h2>
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm">
 
-@if ($errors->any())
-<div class="mb-4 text-red-600 text-sm">
-@foreach ($errors->all() as $error)
-<div>{{ $error }}</div>
-@endforeach
+<!-- HEADER -->
+<div class="px-5 py-4 border-b">
+    <h2 class="text-base font-semibold text-slate-900">Create Company</h2>
+    <p class="text-xs text-slate-500">Add new company details</p>
 </div>
-@endif
 
-<form method="POST" action="{{ route('companies.store') }}">
+<!-- FORM -->
+<form method="POST" action="{{ route('companies.store') }}" class="p-5">
 @csrf
 
-<div class="grid gap-5">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
+<!-- COMPANY NAME -->
+<div class="md:col-span-2">
+    <label class="text-xs font-medium text-slate-600">Company Name</label>
+    <input name="name" value="{{ old('name') }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('name') border-red-500 @enderror">
+    @error('name')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
+
+
+
+<!-- EMAIL -->
 <div>
-<label class="text-sm font-medium">Company Name</label>
-<input name="name"
-value="{{ old('name') }}"
-class="w-full border rounded-lg px-3 py-2 mt-1">
+    <label class="text-xs font-medium text-slate-600">Email</label>
+    <input type="email" name="email" value="{{ old('email') }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('email') border-red-500 @enderror">
+    @error('email')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
 </div>
 
+<!-- PHONE -->
 <div>
-<label class="text-sm font-medium">Owner</label>
-<select name="user_id" class="w-full border rounded-lg px-3 py-2 mt-1">
-
-@foreach($users as $user)
-<option value="{{ $user->id }}">
-{{ $user->name }}
-</option>
-@endforeach
-
-</select>
+    <label class="text-xs font-medium text-slate-600">Phone</label>
+    <input name="phone" value="{{ old('phone') }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 </div>
 
-<div class="grid grid-cols-2 gap-4">
-
+<!-- WEBSITE -->
 <div>
-<label class="text-sm font-medium">Email</label>
-<input name="email"
-value="{{ old('email') }}"
-class="w-full border rounded-lg px-3 py-2 mt-1">
+    <label class="text-xs font-medium text-slate-600">Website</label>
+    <input name="website"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 </div>
 
+<!-- INDUSTRY -->
 <div>
-<label class="text-sm font-medium">Phone</label>
-<input name="phone"
-value="{{ old('phone') }}"
-class="w-full border rounded-lg px-3 py-2 mt-1">
+    <label class="text-xs font-medium text-slate-600">Industry</label>
+    <input name="industry"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 </div>
 
-</div>
-
+<!-- GST -->
 <div>
-<label class="text-sm font-medium">Plan</label>
-
-<select name="plan" class="w-full border rounded-lg px-3 py-2 mt-1">
-<option value="starter">Starter</option>
-<option value="business">Business</option>
-<option value="enterprise">Enterprise</option>
-</select>
-
+    <label class="text-xs font-medium text-slate-600">GST Number</label>
+    <input name="gst_number"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 </div>
 
-<div class="grid grid-cols-2 gap-4">
-
+<!-- PAN -->
 <div>
-<label class="text-sm font-medium">Screen Limit</label>
-<input name="screen_limit"
-value="5"
-class="w-full border rounded-lg px-3 py-2 mt-1">
+    <label class="text-xs font-medium text-slate-600">PAN Number</label>
+    <input name="pan_number"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
 </div>
 
+<!-- ADDRESS -->
+<div class="md:col-span-2">
+    <label class="text-xs font-medium text-slate-600">Address</label>
+    <input name="address"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- CITY -->
 <div>
-<label class="text-sm font-medium">Storage Limit (MB)</label>
-<input name="storage_limit"
-value="10240"
-class="w-full border rounded-lg px-3 py-2 mt-1">
+    <label class="text-xs font-medium text-slate-600">City</label>
+    <input name="city"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- STATE -->
+<div>
+    <label class="text-xs font-medium text-slate-600">State</label>
+    <input name="state"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- COUNTRY -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Country</label>
+    <input name="country"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- ZIP -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Zip Code</label>
+    <input name="zip_code"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- PLAN -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Plan</label>
+    <select name="plan"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+        <option value="starter">Starter</option>
+        <option value="business">Business</option>
+        <option value="enterprise">Enterprise</option>
+    </select>
+</div>
+
+<!-- SCREEN LIMIT -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Screen Limit</label>
+    <input name="screen_limit" value="{{ old('screen_limit',5) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- STORAGE -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Storage (MB)</label>
+    <input name="storage_limit" value="{{ old('storage_limit',10240) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- USER LIMIT -->
+<div>
+    <label class="text-xs font-medium text-slate-600">User Limit</label>
+    <input name="user_limit" value="{{ old('user_limit',5) }}"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- START DATE -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Start Date</label>
+    <input type="date" name="plan_start_date"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+<!-- END DATE -->
+<div>
+    <label class="text-xs font-medium text-slate-600">End Date</label>
+    <input type="date" name="plan_end_date"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500">
+</div>
+
+
+<!-- STATUS -->
+<div class="md:col-span-2 flex gap-4">
+    <label class="text-xs">
+        <input type="checkbox" name="is_active" value="1" checked> Active
+    </label>
+
+    <label class="text-xs">
+        <input type="checkbox" name="is_trial" value="1"> Trial
+    </label>
 </div>
 
 </div>
 
-<div class="flex gap-3 pt-4">
+<!-- ACTIONS -->
+<div class="flex justify-end gap-2 mt-5 border-t pt-4">
 
-<button class="bg-indigo-600 text-white px-6 py-2 rounded-lg">
-Create Company
-</button>
+    <a href="{{ route('companies.index') }}"
+       class="px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">
+        Cancel
+    </a>
 
-<a href="{{ route('companies.index') }}"
-class="px-6 py-2 border rounded-lg">
-Cancel
-</a>
-
-</div>
+    <button
+        class="px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        Create
+    </button>
 
 </div>
 
 </form>
+
+</div>
 
 </div>
 

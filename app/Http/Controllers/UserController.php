@@ -7,110 +7,295 @@ use App\Models\Company;
 use App\Models\Screen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserController extends Controller
 {
-
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
     public function index(Request $request)
     {
-        $query = User::with(['company','screen']);
+        $authUser = auth()->user();
 
-        if ($request->search) {
-            $query->where(function($q) use ($request){
+        $query = User::with(['company','roles','screen']);
+
+        if ($authUser->isSuperAdmin()) {
+
+            $query->whereHas('roles', function ($q) {
+                $q->whereIn('name', ['admin','manager']);
+            });
+
+        } elseif ($authUser->isAdmin()) {
+
+            $query->where('company_id', $authUser->company_id)
+                  ->role('manager');
+
+        } else {
+
+            $query->where('id', $authUser->id);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
                 $q->where('name','like','%'.$request->search.'%')
                   ->orWhere('email','like','%'.$request->search.'%');
             });
         }
 
-        if ($request->role) {
-            $query->where('role',$request->role);
+        if ($request->filled('role')) {
+            $query->role($request->role);
         }
 
-        $users = $query->latest()->paginate(10)->withQueryString();
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status);
+        }
+
+     $users = $query->latest()->paginate(10)->withQueryString();
 
         return view('users.index', compact('users'));
     }
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
     public function create()
     {
-        $companies = Company::pluck('name','id');
-        $screens = Screen::pluck('name','id');
+        $authUser = auth()->user();
 
-        return view('users.create', compact('companies','screens'));
+        $companies = $authUser->isSuperAdmin()
+            ? Company::pluck('name','id')
+            : Company::where('id', $authUser->company_id)->pluck('name','id');
+
+        $roles = $authUser->isSuperAdmin()
+            ? Role::whereIn('name',['admin','manager'])->pluck('name','name')
+            : Role::where('name','manager')->pluck('name','name');
+
+        $screens = $authUser->isSuperAdmin()
+            ? Screen::pluck('name','id')
+            : Screen::where('company_id', $authUser->company_id)->pluck('name','id');
+
+        return view('users.create', compact('companies','roles','screens'));
     }
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | STORE
+    |--------------------------------------------------------------------------
+    */
     public function store(Request $request)
     {
+        $authUser = auth()->user();
+
         $request->validate([
-            'name'=>'required',
-            'email'=>'required|email|unique:users',
-            'password'=>'required|min:6'
+            'name'       => 'required|string|max:255',
+            'email'      => 'required|email|unique:users',
+            'password'   => 'required|min:6',
+            'role'       => 'required|in:admin,manager',
+            'company_id' => 'nullable|exists:companies,id',
+            'screen_id'  => 'required_if:role,manager|nullable|exists:screens,id',
         ]);
 
-        $data = $request->all();
-        $data['password'] = Hash::make($request->password);
+        if ($authUser->isAdmin() && $request->role !== 'manager') {
+            abort(403);
+        }
 
-        User::create($data);
+        $companyId = $authUser->isAdmin()
+            ? $authUser->company_id
+            : $request->company_id;
 
-        system_log('user','User Created',$request->email);
+        $user = User::create([
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'password'   => Hash::make($request->password),
+            'company_id' => $companyId,
+            'is_active'  => 1,
+        ]);
 
-        return redirect()->route('users.index')
-            ->with('success','User created');
+        $user->syncRoles([$request->role]);
+
+        /*
+        |-----------------------------------------
+        | SCREEN ASSIGN
+        |-----------------------------------------
+        */
+        if ($request->role === 'manager' && $request->filled('screen_id')) {
+
+            $screen = Screen::find($request->screen_id);
+
+            if ($screen && $screen->company_id != $companyId) {
+                return back()->withErrors([
+                    'screen_id' => 'Screen does not belong to selected company'
+                ]);
+            }
+
+            $user->update([
+                'screen_id' => $request->screen_id
+            ]);
+
+        } else {
+            $user->update([
+                'screen_id' => null
+            ]);
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return redirect()->route('users.index')->with('success','User created');
     }
 
-
-    public function show(User $user)
-    {
-        return view('users.show', compact('user'));
-    }
-
-
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT
+    |--------------------------------------------------------------------------
+    */
     public function edit(User $user)
     {
-        $companies = Company::pluck('name','id');
-        $screens = Screen::pluck('name','id');
+        $authUser = auth()->user();
 
-        return view('users.edit', compact('user','companies','screens'));
+        $this->authorizeAccess($user);
+
+        if ($authUser->isManager()) {
+            abort(403);
+        }
+
+        $companies = $authUser->isSuperAdmin()
+            ? Company::pluck('name','id')
+            : Company::where('id', $authUser->company_id)->pluck('name','id');
+
+        $roles = $authUser->isSuperAdmin()
+            ? Role::whereIn('name',['admin','manager'])->pluck('name','name')
+            : Role::where('name','manager')->pluck('name','name');
+
+        $screens = $authUser->isSuperAdmin()
+            ? Screen::pluck('name','id')
+            : Screen::where('company_id', $authUser->company_id)->pluck('name','id');
+
+        $user->load('roles');
+
+        return view('users.edit', compact('user','companies','roles','screens'));
     }
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | UPDATE
+    |--------------------------------------------------------------------------
+    */
     public function update(Request $request, User $user)
     {
-        $data = $request->all();
+        $authUser = auth()->user();
 
-        if ($request->password) {
+        $this->authorizeAccess($user);
+
+        $request->validate([
+            'name'       => 'required|string|max:255',
+            'email'      => 'required|email|unique:users,email,'.$user->id,
+            'role'       => 'required|in:admin,manager',
+            'company_id' => 'nullable|exists:companies,id',
+            'screen_id'  => 'required_if:role,manager|nullable|exists:screens,id',
+        ]);
+
+        if ($authUser->isAdmin() && $request->role !== 'manager') {
+            abort(403);
+        }
+
+        $companyId = $authUser->isAdmin()
+            ? $authUser->company_id
+            : $request->company_id;
+
+        $data = [
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'company_id' => $companyId,
+            'is_active'  => $request->boolean('is_active'),
+        ];
+
+        if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        /*
+        |-----------------------------------------
+        | SCREEN ASSIGN
+        |-----------------------------------------
+        */
+        if ($request->role === 'manager' && $request->filled('screen_id')) {
+
+            $screen = Screen::find($request->screen_id);
+
+            if ($screen && $screen->company_id != $companyId) {
+                return back()->withErrors([
+                    'screen_id' => 'Screen does not belong to selected company'
+                ]);
+            }
+
+            $data['screen_id'] = $request->screen_id;
+
         } else {
-            unset($data['password']);
+            $data['screen_id'] = null;
         }
 
         $user->update($data);
 
-        system_log('user','User Updated',$user->email);
+        $user->syncRoles([$request->role]);
 
-        return redirect()->route('users.index');
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return redirect()->route('users.index')->with('success','User updated');
     }
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
     public function destroy(User $user)
     {
+        $authUser = auth()->user();
+
+        if ($authUser->id === $user->id) {
+            return back()->with('error','Cannot delete yourself');
+        }
+
+        $this->authorizeAccess($user);
+
         $user->delete();
 
-        system_log('user','User Deleted',$user->email);
-
-        return back();
+        return back()->with('success','User deleted');
     }
 
-
-    public function toggle(User $user)
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESS CONTROL
+    |--------------------------------------------------------------------------
+    */
+    private function authorizeAccess($user)
     {
-        $user->update([
-            'is_active' => !$user->is_active
-        ]);
+        $authUser = auth()->user();
 
-        return back();
+        if ($authUser->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($authUser->isAdmin()) {
+            if (!$user->hasRole('manager') || $user->company_id !== $authUser->company_id) {
+                abort(403);
+            }
+            return true;
+        }
+
+        if ($authUser->isManager()) {
+            if ($user->id !== $authUser->id) {
+                abort(403);
+            }
+            return true;
+        }
+
+        abort(403);
     }
-
 }

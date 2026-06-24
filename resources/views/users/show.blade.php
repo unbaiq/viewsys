@@ -4,151 +4,148 @@
 
 @section('content')
 
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="max-w-8xl mx-auto space-y-5">
 
-<!-- Profile Card -->
-<div class="bg-white shadow rounded-xl p-6">
+<!-- ================= PROFILE ================= -->
+<div class="bg-white border border-slate-200 rounded-xl p-5 flex items-center justify-between">
 
-<div class="flex items-center gap-6">
+    <div class="flex items-center gap-4">
 
-<img
-class="w-16 h-16 rounded-full"
-src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&size=128">
+        <img
+            class="w-14 h-14 rounded-full border"
+            src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&size=128">
 
-<div>
-<h2 class="text-xl font-semibold text-gray-800">
-{{ $user->name }}
-</h2>
+        <div>
+            <div class="text-base font-semibold text-slate-900">
+                {{ $user->name }}
+            </div>
 
-<p class="text-gray-500 text-sm">
-{{ $user->email }}
-</p>
+            <div class="text-xs text-slate-500">
+                {{ $user->email }}
+            </div>
 
-<div class="mt-2 flex gap-2">
+            <div class="flex items-center gap-2 mt-2">
 
-<span class="px-2 py-1 text-xs rounded bg-indigo-100 text-indigo-700 capitalize">
-{{ $user->role }}
-</span>
+                <!-- ROLE -->
+                @php
+                    $roleColors = [
+                        'superadmin' => 'bg-purple-100 text-purple-700',
+                        'admin' => 'bg-indigo-100 text-indigo-700',
+                        'manager' => 'bg-blue-100 text-blue-700',
+                    ];
+                @endphp
 
-@if($user->is_active)
-<span class="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
-Active
-</span>
-@else
-<span class="px-2 py-1 text-xs rounded bg-red-100 text-red-700">
-Disabled
-</span>
-@endif
+                <span class="px-2.5 py-0.5 text-[11px] rounded-full font-medium capitalize {{ $roleColors[$user->role] ?? 'bg-gray-100 text-gray-600' }}">
+                    {{ $user->role }}
+                </span>
+
+                <!-- STATUS -->
+                @if($user->is_active)
+                    <span class="px-2.5 py-0.5 text-[11px] rounded-full bg-green-100 text-green-700 font-medium">
+                        Active
+                    </span>
+                @else
+                    <span class="px-2.5 py-0.5 text-[11px] rounded-full bg-red-100 text-red-700 font-medium">
+                        Disabled
+                    </span>
+                @endif
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- QUICK ACTION -->
+    <a href="{{ route('users.edit',$user) }}"
+       class="px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        Edit
+    </a>
+
+</div>
+
+
+<!-- ================= DETAILS ================= -->
+<div class="bg-white border border-slate-200 rounded-xl">
+
+<div class="px-5 py-3 border-b text-sm font-medium text-slate-700">
+    User Information
+</div>
+
+<div class="p-5 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+
+    <div>
+        <p class="text-xs text-slate-500">Full Name</p>
+        <p class="font-medium text-slate-800">{{ $user->name }}</p>
+    </div>
+
+    <div>
+        <p class="text-xs text-slate-500">Email</p>
+        <p class="font-medium text-slate-800">{{ $user->email }}</p>
+    </div>
+
+    <div>
+        <p class="text-xs text-slate-500">Role</p>
+        <p class="font-medium capitalize text-slate-800">{{ $user->role }}</p>
+    </div>
+
+    <div>
+        <p class="text-xs text-slate-500">Company</p>
+        <p class="font-medium text-slate-800">
+            {{ $user->company->name ?? '-' }}
+        </p>
+    </div>
+
+    <div>
+        <p class="text-xs text-slate-500">Screen</p>
+        <p class="font-medium text-slate-800">
+            {{ $user->screen->name ?? '-' }}
+        </p>
+    </div>
+
+    <div>
+        <p class="text-xs text-slate-500">Status</p>
+        <p class="font-medium {{ $user->is_active ? 'text-green-600' : 'text-red-600' }}">
+            {{ $user->is_active ? 'Active' : 'Disabled' }}
+        </p>
+    </div>
+
+    <div>
+        <p class="text-xs text-slate-500">Created</p>
+        <p class="font-medium text-slate-800">
+            {{ $user->created_at->format('d M Y') }}
+        </p>
+    </div>
+
+    <div>
+        <p class="text-xs text-slate-500">Updated</p>
+        <p class="font-medium text-slate-800">
+            {{ $user->updated_at->diffForHumans() }}
+        </p>
+    </div>
 
 </div>
 
 </div>
 
-</div>
 
-</div>
+<!-- ================= ACTIONS ================= -->
+<div class="flex justify-between items-center">
 
+    <a href="{{ route('users.index') }}"
+       class="px-4 py-2 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">
+        ← Back
+    </a>
 
-<!-- User Information -->
-<div class="bg-white shadow rounded-xl">
+    <form method="POST" action="{{ route('users.destroy',$user) }}">
+        @csrf
+        @method('DELETE')
 
-<div class="p-6 border-b">
-<h3 class="font-semibold text-gray-800">
-User Information
-</h3>
-</div>
-
-<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-
-<div>
-<label class="text-gray-500">Full Name</label>
-<p class="font-medium text-gray-800">{{ $user->name }}</p>
-</div>
-
-<div>
-<label class="text-gray-500">Email</label>
-<p class="font-medium text-gray-800">{{ $user->email }}</p>
-</div>
-
-<div>
-<label class="text-gray-500">Role</label>
-<p class="font-medium capitalize text-gray-800">{{ $user->role }}</p>
-</div>
-
-<div>
-<label class="text-gray-500">Status</label>
-<p class="font-medium">
-@if($user->is_active)
-<span class="text-green-600">Active</span>
-@else
-<span class="text-red-600">Disabled</span>
-@endif
-</p>
-</div>
-
-<div>
-<label class="text-gray-500">Company</label>
-<p class="font-medium text-gray-800">
-{{ $user->company->name ?? 'Not Assigned' }}
-</p>
-</div>
-
-<div>
-<label class="text-gray-500">Screen</label>
-<p class="font-medium text-gray-800">
-{{ $user->screen->name ?? 'Not Assigned' }}
-</p>
-</div>
-
-<div>
-<label class="text-gray-500">Created</label>
-<p class="font-medium text-gray-800">
-{{ $user->created_at->format('d M Y') }}
-</p>
-</div>
-
-<div>
-<label class="text-gray-500">Last Updated</label>
-<p class="font-medium text-gray-800">
-{{ $user->updated_at->diffForHumans() }}
-</p>
-</div>
-
-</div>
-
-</div>
-
-
-<!-- Actions -->
-<div class="bg-white shadow rounded-xl p-6 flex justify-between">
-
-<a
-href="{{ route('users.index') }}"
-class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50">
-Back
-</a>
-
-<div class="flex gap-3">
-
-<a
-href="{{ route('users.edit',$user) }}"
-class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-Edit
-</a>
-
-<form method="POST" action="{{ route('users.destroy',$user) }}">
-@csrf
-@method('DELETE')
-
-<button
-onclick="return confirm('Delete this user?')"
-class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-Delete
-</button>
-
-</form>
-
-</div>
+        <button
+            onclick="return confirm('Delete this user?')"
+            class="px-4 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Delete
+        </button>
+    </form>
 
 </div>
 

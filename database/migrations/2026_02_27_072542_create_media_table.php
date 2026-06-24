@@ -6,41 +6,54 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('media', function (Blueprint $table) {
 
             $table->id();
-        
+
+            // COMPANY
             $table->foreignId('company_id')
                 ->constrained()
                 ->cascadeOnDelete();
-        
-            $table->string('name');
-        
-            $table->enum('type',['image','video']);
-        
+
+            // USER FRIENDLY NAME
+            $table->string('name')->index();
+
+            // UNIQUE STORED FILE NAME
+            $table->string('file_name')->unique();
+
+            // TYPE (image / video)
+            $table->enum('type', ['image', 'video'])->index();
+
+            // STORAGE PATH
             $table->string('file_path');
-        
-            $table->integer('duration')->nullable();
-        
-            $table->bigInteger('size');
-        
+
+            // FILE SIZE (bytes)
+            $table->unsignedBigInteger('size');
+
+            // VIDEO ACTUAL DURATION (seconds)
+            $table->unsignedInteger('duration')
+                ->nullable()
+                ->comment('Only for videos');
+
+            // IMAGE DISPLAY DURATION (seconds)
+            $table->unsignedInteger('display_duration')
+                ->nullable()
+                ->comment('Only for images (how long to show)');
+
+            // CREATOR
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->cascadeOnDelete();
-        
+
             $table->timestamps();
-        
+
+            // OPTIONAL: extra composite index for faster filtering
+            $table->index(['company_id', 'type']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('media');

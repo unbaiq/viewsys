@@ -4,194 +4,216 @@
 
 @section('content')
 
-<div class="max-w-3xl mx-auto p-6">
+<style>
+/* 🔥 PROFESSIONAL INPUT STYLE RE-INTEGRATED */
+.input {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    background: #fff;
+    transition: all 0.2s ease;
+}
 
-<div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+.input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
 
-<!-- Header -->
-<div class="px-6 py-5 border-b bg-gray-50">
-<h2 class="text-lg font-semibold text-gray-800">Edit Schedule</h2>
-<p class="text-sm text-gray-500">Update screen playlist timing</p>
+.input:hover {
+    border-color: #c7d2fe;
+}
+
+.input:disabled {
+    background: #f1f5f9;
+    cursor: not-allowed;
+}
+
+.input-error {
+    border-color: #ef4444;
+}
+
+.label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.btn-primary {
+    background: #6366f1;
+    color: white;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+.btn-primary:hover {
+    background: #4f46e5;
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+</style>
+
+<div class="max-w-6xl mx-auto">
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm">
+
+<div class="px-5 py-4 border-b">
+    <h2 class="text-base font-semibold text-slate-900">Edit Schedule</h2>
+    <p class="text-xs text-slate-500">Update schedule settings</p>
 </div>
 
-<form method="POST" action="{{ route('schedules.update',$schedule) }}" class="p-6 space-y-6">
+<form method="POST" action="{{ route('schedules.update',$schedule) }}" class="p-5 space-y-5">
 @csrf
 @method('PUT')
 
 @php
-$selectedDays = old('days_of_week', $schedule->days_of_week ?? []);
+    $isDefault = $schedule->is_default;
+    $isCluster = !$schedule->is_default && $schedule->cluster_id;
+    $isScreen  = !$schedule->is_default && !$schedule->cluster_id;
 @endphp
 
-<!-- Screen -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-2">
-Screen
-</label>
+<div class="space-y-1">
+    <label class="label">Target Type</label>
+    <div class="grid grid-cols-3 gap-3 text-xs">
+        <label class="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+            <input type="radio" name="target_type" value="screen" {{ $isScreen ? 'checked' : '' }}>
+            Screen
+        </label>
 
-<select name="screen_id"
-class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
+        <label class="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+            <input type="radio" name="target_type" value="cluster" {{ $isCluster ? 'checked' : '' }}>
+            Cluster
+        </label>
 
-@foreach($screens as $screen)
-
-<option value="{{ $screen->id }}"
-{{ $schedule->screen_id == $screen->id ? 'selected' : '' }}>
-{{ $screen->name }}
-</option>
-
-@endforeach
-
-</select>
+        <label class="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+            <input type="radio" name="target_type" value="default" {{ $isDefault ? 'checked' : '' }}>
+            All Screens
+        </label>
+    </div>
 </div>
 
-<!-- Playlist -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-2">
-Playlist
-</label>
-
-<select name="playlist_id"
-class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
-
-@foreach($playlists as $playlist)
-
-<option value="{{ $playlist->id }}"
-{{ $schedule->playlist_id == $playlist->id ? 'selected' : '' }}>
-{{ $playlist->name }}
-</option>
-
-@endforeach
-
-</select>
+<div id="screenBox" class="space-y-1 {{ $isScreen ? '' : 'hidden' }}">
+    <label class="label">Screen</label>
+    <select name="screen_id" class="input @error('screen_id') input-error @enderror">
+        <option value="">Select Screen</option>
+        @foreach($screens as $screen)
+            <option value="{{ $screen->id }}"
+                {{ old('screen_id', $schedule->screen_id) == $screen->id ? 'selected' : '' }}>
+                {{ $screen->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('screen_id') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
 </div>
 
-<!-- Dates -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-2">
-Start Date
-</label>
-
-<input type="date"
-name="start_date"
-value="{{ optional($schedule->start_date)->format('Y-m-d') }}"
-class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
+<div id="clusterBox" class="space-y-1 {{ $isCluster ? '' : 'hidden' }}">
+    <label class="label">Cluster</label>
+    <select name="cluster_id" class="input @error('cluster_id') input-error @enderror">
+        <option value="">Select Cluster</option>
+        @foreach($clusters as $cluster)
+            <option value="{{ $cluster->id }}"
+                {{ old('cluster_id', $schedule->cluster_id) == $cluster->id ? 'selected' : '' }}>
+                {{ $cluster->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('cluster_id') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
 </div>
 
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-2">
-End Date
-</label>
+<input type="hidden" name="is_default" id="isDefault" value="{{ $schedule->is_default ? 1 : 0 }}">
 
-<input type="date"
-name="end_date"
-value="{{ optional($schedule->end_date)->format('Y-m-d') }}"
-class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
+<div class="space-y-1">
+    <label class="label">Playlist</label>
+    <select name="playlist_id" class="input @error('playlist_id') input-error @enderror">
+        @foreach($playlists as $playlist)
+            <option value="{{ $playlist->id }}"
+                {{ old('playlist_id', $schedule->playlist_id) == $playlist->id ? 'selected' : '' }}>
+                {{ $playlist->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('playlist_id') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
 </div>
 
+<div class="grid grid-cols-2 gap-3">
+    <div class="space-y-1">
+        <label class="label">Start Date</label>
+        <input type="date" name="start_date" value="{{ old('start_date', $schedule->start_date ? \Carbon\Carbon::parse($schedule->start_date)->format('Y-m-2d') : '') }}" class="input">
+    </div>
+    <div class="space-y-1">
+        <label class="label">End Date</label>
+        <input type="date" name="end_date" value="{{ old('end_date', $schedule->end_date ? \Carbon\Carbon::parse($schedule->end_date)->format('Y-m-2d') : '') }}" class="input">
+    </div>
 </div>
 
-<!-- Time -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-2">
-Start Time
-</label>
-
-<input type="time"
-name="start_time"
-value="{{ $schedule->start_time }}"
-class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
+<div class="grid grid-cols-2 gap-3">
+    <div class="space-y-1">
+        <label class="label">Start Time</label>
+        <input type="time" name="start_time" value="{{ old('start_time', $schedule->start_time) }}" class="input">
+    </div>
+    <div class="space-y-1">
+        <label class="label">End Time</label>
+        <input type="time" name="end_time" value="{{ old('end_time', $schedule->end_time) }}" class="input">
+    </div>
 </div>
 
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-2">
-End Time
-</label>
-
-<input type="time"
-name="end_time"
-value="{{ $schedule->end_time }}"
-class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
+<div class="space-y-1">
+    <label class="label">Active Days</label>
+    <div class="flex flex-wrap gap-2 text-xs">
+        @foreach(['mon','tue','wed','thu','fri','sat','sun'] as $day)
+            <label class="border px-3 py-1.5 rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition flex items-center gap-1.5">
+                <input type="checkbox" name="days_of_week[]" value="{{ $day }}"
+                    {{ in_array($day, old('days_of_week', $schedule->days_of_week ?? [])) ? 'checked' : '' }}>
+                {{ ucfirst($day) }}
+            </label>
+        @endforeach
+    </div>
 </div>
 
+<div class="space-y-1">
+    <label class="label">Priority</label>
+    <input type="number" name="priority"
+        value="{{ old('priority', $schedule->priority) }}"
+        class="input @error('priority') input-error @enderror">
+    @error('priority') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
 </div>
 
-<!-- Days -->
-<div>
-
-<label class="block text-sm font-medium text-gray-700 mb-3">
-Days of Week
-</label>
-
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-
-@php
-$days = [
-'mon'=>'Monday',
-'tue'=>'Tuesday',
-'wed'=>'Wednesday',
-'thu'=>'Thursday',
-'fri'=>'Friday',
-'sat'=>'Saturday',
-'sun'=>'Sunday'
-];
-@endphp
-
-@foreach($days as $key => $day)
-
-<label class="flex items-center gap-2 bg-gray-50 border rounded-lg px-3 py-2 cursor-pointer hover:bg-gray-100">
-
-<input type="checkbox"
-name="days_of_week[]"
-value="{{ $key }}"
-{{ in_array($key,$selectedDays) ? 'checked' : '' }}
-class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-
-<span class="text-sm text-gray-700">
-{{ $day }}
-</span>
-
-</label>
-
-@endforeach
-
-</div>
-
-</div>
-
-<!-- Priority -->
-<div>
-<label class="block text-sm font-medium text-gray-700 mb-2">
-Priority
-</label>
-
-<input type="number"
-name="priority"
-value="{{ $schedule->priority }}"
-class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
-</div>
-
-<!-- Footer -->
-<div class="flex items-center justify-between pt-6 border-t">
-
-<a href="{{ route('schedules.index') }}"
-class="text-sm text-gray-500 hover:text-gray-700">
-Cancel
-</a>
-
-<button
-class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-medium shadow">
-Update Schedule
-</button>
-
+<div class="flex justify-end gap-2 pt-4 border-t">
+    <a href="{{ route('schedules.index') }}" class="btn-secondary">Cancel</a>
+    <button class="btn-primary">Update</button>
 </div>
 
 </form>
-
+</div>
 </div>
 
-</div>
+<script>
+document.querySelectorAll('[name="target_type"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+        let type = this.value;
+
+        document.getElementById('screenBox').classList.add('hidden');
+        document.getElementById('clusterBox').classList.add('hidden');
+        document.getElementById('isDefault').value = 0;
+
+        if (type === 'screen') {
+            document.getElementById('screenBox').classList.remove('hidden');
+        }
+        if (type === 'cluster') {
+            document.getElementById('clusterBox').classList.remove('hidden');
+        }
+        if (type === 'default') {
+            document.getElementById('isDefault').value = 1;
+        }
+    });
+});
+</script>
 
 @endsection

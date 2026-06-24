@@ -20,11 +20,15 @@ use App\Http\Controllers\ClusterController;
 
 
 
-
-
-Route::get('/dashboard',[DashboardController::class,'index'])
-->middleware('auth')
-->name('dashboard');
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+});
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware('auth')
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -35,10 +39,12 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth'])->group(function () {
 
     Route::resource('companies', CompanyController::class);
+    Route::patch('/companies/{company}/toggle', [CompanyController::class, 'toggle'])
+    ->name('companies.toggle');
     Route::resource('plans', PlanController::class);
     Route::post('/plans/{plan}/toggle', [PlanController::class, 'toggle'])
         ->name('plans.toggle');
-        Route::resource('storage-usage', StorageController::class);
+    Route::resource('storage-usage', StorageController::class);
     // system log
     Route::get('/logs', [SystemLogController::class, 'index'])->name('logs.index');
 
@@ -52,13 +58,15 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', UserController::class);
     Route::post('/users/{user}/toggle', [UserController::class, 'toggle'])->name('users.toggle');
     Route::resource('screens', ScreenController::class);
+    Route::post('/screens/{screen}/restart', [ScreenController::class, 'restart'])
+    ->name('screens.restart');
+    Route::post('/screens/{screen}/screenshot', [ScreenController::class, 'requestScreenshot'])->name('screens.screenshot');
+    Route::get('/screens-map', [ScreenController::class, 'map'])->name('screens.map');
     Route::resource('clusters', ClusterController::class);
-    Route::get('/media', [MediaController::class, 'index'])->name('media.index');
-    Route::get('/media/create', [MediaController::class, 'create'])->name('media.create');
-    Route::post('/media', [MediaController::class, 'store'])->name('media.store');
+    Route::get('/get-screens/{company}', [ClusterController::class, 'getScreens']);
+    Route::resource('media', MediaController::class)
+    ->parameters(['media' => 'media']);
 
-    Route::get('/media/{media}', [MediaController::class, 'show'])->name('media.show');
-    Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
     Route::resource('playlists', PlaylistController::class);
 
@@ -67,6 +75,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::delete('/playlist-items/{item}', [PlaylistController::class, 'removeMedia'])
         ->name('playlist-items.destroy');
+    Route::get('/get-screens/{companyId}', function ($companyId) {
+        return \App\Models\Screen::where('company_id', $companyId)->get();
+    });
 
     Route::resource('schedules', ScheduleController::class);
     Route::get('/devices', [DeviceController::class, 'index'])->name('devices.index');
@@ -84,6 +95,18 @@ Route::middleware(['auth'])->group(function () {
 
 
 });
-
+Route::get('/create-storage-link', function () {
+    $target = storage_path('app/public');
+    $link = public_path('storage');
+    if (!file_exists($link)) {
+        if (!is_link($link)) {
+            if (!file_exists($target)) {
+                mkdir($target, 0777, true);
+            }
+            symlink($target, $link);
+        }
+    }
+    return 'The [public/storage] directory has been linked.';
+});
 
 require __DIR__ . '/auth.php';

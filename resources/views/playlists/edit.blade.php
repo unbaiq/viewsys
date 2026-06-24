@@ -4,129 +4,115 @@
 
 @section('content')
 
-<div class="max-w-3xl mx-auto space-y-6">
+<div class="max-w-8xl mx-auto space-y-5">
 
-    {{-- Breadcrumb --}}
-    <div class="text-sm text-gray-500">
-        <a href="{{ route('playlists.index') }}" class="hover:text-gray-700">Playlists</a>
-        <span class="mx-2">/</span>
-        <span class="text-gray-700 font-medium">Edit</span>
-    </div>
+<!-- ================= HEADER ================= -->
+<div class="flex items-center justify-between">
 
-
-    {{-- Page Heading --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Edit Playlist</h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Update playlist details and manage your screen content.
-            </p>
+    <div>
+        <div class="text-xs text-slate-500">
+            <a href="{{ route('playlists.index') }}" class="hover:text-slate-700">Playlists</a>
+            <span class="mx-1">/</span>
+            <span class="text-slate-700">Edit</span>
         </div>
 
-        <div class="text-xs text-gray-400">
+        <div class="text-base font-semibold text-slate-900 mt-1">
+            Edit Playlist
+        </div>
+
+        <div class="text-[11px] text-slate-500">
             Created {{ $playlist->created_at->diffForHumans() }}
         </div>
     </div>
 
-
-    {{-- Card --}}
-    <div class="bg-white border border-gray-100 shadow-sm rounded-2xl">
-
-        <div class="p-6">
-
-            <form method="POST" action="{{ route('playlists.update',$playlist) }}" class="space-y-6">
-
-                @csrf
-                @method('PUT')
-
-                {{-- Playlist Name --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Playlist Name
-                    </label>
-
-                    <input
-                        type="text"
-                        name="name"
-                        value="{{ old('name', $playlist->name) }}"
-                        required
-                        placeholder="Example: Office Lobby Screens"
-                        class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-
-                    @error('name')
-                        <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
-                    @enderror
-                </div>
+</div>
 
 
-                {{-- Playlist Info --}}
-                <div class="bg-gray-50 border rounded-xl p-4 text-sm text-gray-600 flex justify-between">
-                    <span>
-                        Media Items
-                    </span>
+<!-- ================= FORM ================= -->
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm">
 
-                    <span class="font-semibold text-gray-800">
-                        {{ $playlist->items()->count() }}
-                    </span>
-                </div>
+<form method="POST" action="{{ route('playlists.update',$playlist) }}" class="p-5 space-y-4">
+@csrf
+@method('PUT')
+
+<!-- NAME -->
+<div>
+    <label class="text-xs font-medium text-slate-600">Playlist Name</label>
+
+    <input type="text"
+        name="name"
+        value="{{ old('name',$playlist->name) }}"
+        required
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('name') border-red-500 @enderror">
+
+    @error('name')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
 
 
-                {{-- Actions --}}
-                <div class="flex items-center justify-between pt-4 border-t">
+<!-- INFO -->
+<div class="flex justify-between items-center text-xs bg-slate-50 border rounded-lg px-3 py-2">
 
-                    <a href="{{ route('playlists.index') }}"
-                       class="text-sm text-gray-500 hover:text-gray-700">
-                        Cancel
-                    </a>
+    <span class="text-slate-500">Media Items</span>
 
-                    <button
-                        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition">
+    <span class="font-medium text-slate-800">
+        {{ $playlist->items()->count() }}
+    </span>
 
-                        Save Changes
+</div>
 
-                    </button>
 
-                </div>
+<!-- ACTIONS -->
+<div class="flex justify-end gap-2 pt-4 border-t">
 
-            </form>
+    <a href="{{ route('playlists.index') }}"
+       class="px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">
+        Cancel
+    </a>
 
+    <button
+        class="px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        Save
+    </button>
+
+</div>
+
+</form>
+
+</div>
+
+
+<!-- ================= DANGER ================= -->
+<div class="bg-white border border-red-200 rounded-xl">
+
+<div class="px-5 py-4 flex items-center justify-between">
+
+    <div>
+        <div class="text-xs font-medium text-red-600">
+            Delete Playlist
         </div>
 
-    </div>
-
-
-    {{-- Danger Zone --}}
-    <div class="bg-white border border-red-100 rounded-2xl shadow-sm">
-
-        <div class="p-6 flex items-center justify-between">
-
-            <div>
-                <h3 class="text-sm font-semibold text-red-600">
-                    Delete Playlist
-                </h3>
-
-                <p class="text-xs text-gray-500 mt-1">
-                    This action cannot be undone.
-                </p>
-            </div>
-
-            <form method="POST"
-                  action="{{ route('playlists.destroy',$playlist) }}"
-                  onsubmit="return confirm('Delete this playlist?')">
-
-                @csrf
-                @method('DELETE')
-
-                <button
-                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                    Delete
-                </button>
-
-            </form>
-
+        <div class="text-[11px] text-slate-500">
+            This action cannot be undone
         </div>
-
     </div>
+
+    <form method="POST"
+          action="{{ route('playlists.destroy',$playlist) }}"
+          onsubmit="return confirm('Delete this playlist?')">
+        @csrf
+        @method('DELETE')
+
+        <button
+            class="px-4 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Delete
+        </button>
+    </form>
+
+</div>
+
+</div>
 
 </div>
 

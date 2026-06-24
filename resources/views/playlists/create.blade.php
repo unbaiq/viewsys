@@ -4,86 +4,81 @@
 
 @section('content')
 
-<div class="max-w-2xl mx-auto space-y-6">
+<div class="max-w-8xl mx-auto">
 
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Create Playlist</h1>
-        <p class="text-sm text-gray-500 mt-1">
-            Create a playlist to organize and display media on your screens.
-        </p>
-    </div>
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm">
 
-    <div class="bg-white border border-gray-100 shadow-sm rounded-2xl">
-        <div class="p-6">
+<!-- HEADER -->
+<div class="px-5 py-4 border-b">
+    <h2 class="text-base font-semibold text-slate-900">Create Playlist</h2>
+    <p class="text-xs text-slate-500">Organize media for screens</p>
+</div>
 
-            <form method="POST" action="{{ route('playlists.store') }}" class="space-y-5">
-                @csrf
+<!-- FORM -->
+<form method="POST" action="{{ route('playlists.store') }}" class="p-5 space-y-4">
+@csrf
 
+{{-- COMPANY --}}
+@if(auth()->user()->role === 'superadmin')
+<div>
+    <label class="text-xs font-medium text-slate-600">Company</label>
 
-                {{-- Company (Superadmin only) --}}
-                @if(auth()->user()->role === 'superadmin')
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Company
-                    </label>
+    <select name="company_id"
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('company_id') border-red-500 @enderror">
 
-                    <select name="company_id"
-                        required
-                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500">
+        <option value="">Select Company</option>
 
-                        <option value="">Select Company</option>
+        @foreach($companies as $company)
+            <option value="{{ $company->id }}"
+                {{ old('company_id')==$company->id?'selected':'' }}>
+                {{ $company->name }}
+            </option>
+        @endforeach
 
-                        @foreach($companies as $company)
-                            <option value="{{ $company->id }}">
-                                {{ $company->name }}
-                            </option>
-                        @endforeach
+    </select>
 
-                    </select>
-                </div>
-                @endif
-
-
-                {{-- Playlist Name --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        Playlist Name
-                    </label>
-
-                    <input
-                        type="text"
-                        name="name"
-                        value="{{ old('name') }}"
-                        required
-                        placeholder="Example: Office Lobby Screen"
-                        class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-500">
-
-                    @error('name')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+    @error('company_id')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
+@endif
 
 
-                <div class="flex items-center justify-between pt-2">
+{{-- NAME --}}
+<div>
+    <label class="text-xs font-medium text-slate-600">Playlist Name</label>
 
-                    <a href="{{ route('playlists.index') }}"
-                       class="text-sm text-gray-500 hover:text-gray-700">
-                        Cancel
-                    </a>
+    <input type="text"
+        name="name"
+        value="{{ old('name') }}"
+        placeholder="Office Lobby Screen"
+        required
+        class="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 @error('name') border-red-500 @enderror">
 
-                    <button
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold">
+    @error('name')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
 
-                        Create Playlist
 
-                    </button>
+<!-- ACTIONS -->
+<div class="flex justify-end gap-2 pt-4 border-t">
 
-                </div>
+    <a href="{{ route('playlists.index') }}"
+       class="px-3 py-2 text-xs border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50">
+        Cancel
+    </a>
 
-            </form>
+    <button
+        class="px-4 py-2 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        Create
+    </button>
 
-        </div>
-    </div>
+</div>
+
+</form>
+
+</div>
 
 </div>
 
